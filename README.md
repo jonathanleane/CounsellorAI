@@ -4,12 +4,14 @@ An open-source AI therapy companion that provides personalized mental health sup
 
 ## Features
 
-- 🧠 **Personalized AI Therapy**: Tailored responses based on your profile and history
+- 🧠 **Multi-Model AI Support**: Choose between GPT-4, Claude 3, or Gemini for therapy sessions
 - 🔒 **Privacy First**: Run locally or deploy online - your data stays yours
-- 💬 **Natural Conversations**: Powered by GPT-4.5 and Claude 3.7
+- 💬 **Natural Conversations**: Interactive therapy sessions with context-aware responses
 - 📊 **Progress Tracking**: Monitor mood patterns and therapy goals
 - 🧩 **Transparent AI**: See and edit what the AI remembers about you
 - 🌐 **Open Source**: MIT licensed for maximum flexibility
+- 📱 **Responsive Design**: Works on desktop and mobile devices
+- 💾 **Export Data**: Download your sessions for personal records
 
 ## Quick Start
 
@@ -20,19 +22,20 @@ An open-source AI therapy companion that provides personalized mental health sup
 git clone https://github.com/yourusername/counsellor-ai.git
 cd counsellor-ai
 
-# One-command setup
-npm run setup:local
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp server/.env.example server/.env
+# Edit server/.env and add your API keys
 
 # Start the application
-npm start
+npm run dev
 ```
 
-The setup script will:
-1. Install all dependencies
-2. Create a local SQLite database
-3. Generate a `.env` file
-4. Prompt for your OpenAI/Anthropic API keys
-5. Start both frontend and backend
+This will start:
+- Server on http://localhost:3001
+- Client on http://localhost:3000
 
 Visit `http://localhost:3000` to begin.
 
@@ -43,9 +46,11 @@ See [deployment guide](./docs/ARCHITECTURE_OVERVIEW.md#deployment-options) for c
 ## Requirements
 
 - Node.js 18+
-- npm or yarn
-- OpenAI API key (for GPT-4.5)
-- Anthropic API key (for Claude 3.7) - optional
+- npm 9+
+- At least one AI provider API key:
+  - OpenAI API key (for GPT-4)
+  - Anthropic API key (for Claude 3) - optional
+  - Google API key (for Gemini) - optional
 
 ## Usage
 
@@ -99,8 +104,9 @@ CounsellorAI is not a replacement for professional mental health care. If you're
 
 ## Acknowledgments
 
-- OpenAI for GPT-4.5
-- Anthropic for Claude 3.7
+- OpenAI for GPT-4
+- Anthropic for Claude 3
+- Google for Gemini
 - The open-source community
 
 ---

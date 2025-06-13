@@ -1,124 +1,170 @@
 # Claude Assistant Instructions - CounsellorAI
 
 ## Project Overview
-This is an AI therapist application being rebuilt from scratch. The original implementation is in `aitherapist-main/` (to be deleted after rebuild). Comprehensive documentation exists in `/docs/`.
+This is an AI-powered therapy companion application that has been rebuilt from scratch with modern architecture. The application supports multiple AI models (OpenAI GPT-4, Anthropic Claude 3, Google Gemini) and provides a complete therapy session experience with persistent user profiles, session history, and AI-generated insights.
 
 ## Key Project Context
 
-### Architecture
-- **Frontend**: React with TypeScript (planned)
-- **Backend**: Express.js with Node.js 18+
-- **Database**: Firebase Firestore (primary), SQLite (legacy)
-- **AI Models**: OpenAI GPT-4.5 and Anthropic Claude 3.7
+### Current Architecture
+- **Frontend**: React 18 with TypeScript, Material-UI 5, Vite
+- **Backend**: Express.js with TypeScript on Node.js 18+
+- **Database**: SQLite (local storage), Firebase support planned
+- **AI Models**: OpenAI GPT-4, Anthropic Claude 3, Google Gemini 1.5
+- **State Management**: Zustand (client), React Query (server state)
 
-### Critical Security Issues
-1. **API Keys**: Currently hardcoded in `fetch-ai.js` - MUST use environment variables
-2. **No Authentication**: Single-user system - needs multi-user support
-3. **Input Validation**: Missing - add comprehensive validation
+### Security Implementation
+1. **API Keys**: Properly managed via environment variables in `.env`
+2. **Authentication**: Local-first design (no auth needed for personal use)
+3. **Input Validation**: Implemented with Joi/Zod schemas
+4. **Rate Limiting**: API endpoints protected with express-rate-limit
 
 ## When Working on This Project
 
-### Always Check
-1. Review `/docs/` for architectural decisions
-2. Maintain feature parity with original
-3. Follow TypeScript best practices
-4. Ensure API keys are NEVER hardcoded
-5. Test AI integrations thoroughly
+### Project Structure
+```
+CounsellorAI/
+├── client/          # React frontend with Vite
+│   ├── src/
+│   │   ├── pages/   # Page components (Dashboard, Conversation, etc.)
+│   │   ├── components/  # Reusable components
+│   │   ├── services/    # API client and services
+│   │   └── stores/      # Zustand state management
+├── server/          # Express.js backend
+│   ├── src/
+│   │   ├── routes/      # API endpoints
+│   │   ├── services/    # Business logic (AI, database)
+│   │   └── utils/       # Helper functions
+├── shared/          # Shared TypeScript types
+├── docs/           # Comprehensive documentation
+└── database/       # SQLite database (auto-created)
+```
 
 ### Common Tasks
 
 #### Adding New Features
-1. Check if feature exists in original implementation
-2. Review relevant documentation in `/docs/`
-3. Follow existing patterns for consistency
-4. Update tests and documentation
+1. Review relevant documentation in `/docs/`
+2. Check existing implementations for patterns
+3. Use TypeScript interfaces in `/shared/types/`
+4. Update both frontend and backend as needed
+5. Add tests using the test scripts
 
 #### Modifying AI Behavior
-1. Review `AI_INTEGRATION_AND_PROMPTS.md`
-2. Test with both GPT-4.5 and Claude 3.7
-3. Maintain therapeutic best practices
-4. Never compromise user safety
+1. Edit `/server/src/services/ai/therapyPrompt.ts` for prompt changes
+2. Test with all three AI models (GPT-4, Claude 3, Gemini)
+3. Use `/server/src/services/ai/index.ts` for model abstraction
+4. Always maintain therapeutic best practices
 
 #### Database Changes
-1. Update both Firebase and model definitions
-2. Create migration scripts if needed
-3. Test data integrity thoroughly
-4. Document schema changes
+1. Update SQLite schema in `/server/src/services/database/sqlite.ts`
+2. Delete `database/counsellor.db` to recreate with new schema
+3. Test data migration if preserving existing data
+4. Update TypeScript interfaces accordingly
 
 ### Code Style Guidelines
-- Use TypeScript for type safety
-- Follow React hooks best practices
-- Implement proper error boundaries
-- Use async/await over promises
-- Comment complex AI prompt logic
+- TypeScript strict mode enabled
+- React functional components with hooks
+- Material-UI for consistent UI components
+- Async/await for all asynchronous operations
+- Comprehensive error handling with try/catch
+- No comments in code (per user preference)
 
 ### Testing Approach
 ```bash
-# Unit tests
-npm test
+# Test all API endpoints
+node test-full-api.js
 
-# Integration tests
-npm run test:integration
+# Test complete application flow
+node test-app-flow.js
 
-# E2E tests
-npm run test:e2e
+# Quick setup for testing
+node quick-setup.js
 
-# AI response testing
-npm run test:ai
+# Manual API testing
+curl http://localhost:3001/api/health
 ```
 
 ### Performance Considerations
-- Implement message pagination for long conversations
-- Cache AI responses where appropriate
-- Use React.memo for expensive components
-- Optimize bundle size with code splitting
+- Vite provides fast HMR and optimized builds
+- React Query handles caching automatically
+- SQLite for fast local data access
+- Rate limiting prevents API abuse (100 req/15min)
+- Lazy loading for routes with React.lazy
 
 ## Project-Specific Patterns
 
 ### AI Response Generation
 ```typescript
-// Always structure AI calls with proper error handling
-try {
-  const response = await aiService.generateResponse(messages, profile, model);
-  // Handle response
-} catch (error) {
-  // Fallback to safe response
-  return getFallbackResponse();
-}
+// Multi-model AI service with automatic fallback
+const response = await aiService.generateResponse(
+  messages,        // Conversation history
+  userProfile,     // User context
+  model           // 'gpt-4-turbo-preview' | 'claude-3-sonnet-20240229' | 'gemini-1.5-flash'
+);
 ```
 
 ### Session Management
-- Sessions must track timing precisely
-- Empty sessions should be cleanable
-- Always generate appropriate greetings
-- End sessions gracefully with summaries
+- Automatic greeting generation based on last session time
+- Real-time session timer in UI
+- Automatic summary generation on session end
+- Session export in JSON format
+- Mood tracking (1-10 scale)
 
-### Personal Details Tracking
-- 8 categories of information
-- Deep merge updates
-- Respect user privacy
-- Allow transparent editing
+### Profile Management
+- Multi-step onboarding flow
+- Therapist brain stores insights transparently
+- Profile data structured in categories:
+  - Demographics, therapy goals, preferences
+  - Health info, mental health screening
+  - Sensitive topics to avoid
 
-## Gotchas and Known Issues
+## Current Issues and Solutions
 
-1. **Claude Temperature**: Must be exactly 1.0 for thinking mode
-2. **Session Timing**: Uses Australia/Sydney timezone (make configurable)
-3. **Firebase Rules**: Currently too permissive
-4. **Message Ordering**: Ensure timestamp consistency
+1. **Timestamp Display**: Fixed by using ISO format in SQLite
+2. **Node.js v24**: Use compiled JS instead of tsx for compatibility
+3. **Profile Navigation**: Force page reload after creation
+4. **CORS**: Handled by Vite proxy configuration
+5. **Database Path**: Auto-created in project root
 
-## Rebuild Priorities
+## Known Limitations
 
-1. **Phase 1**: Security fixes (API keys, validation)
-2. **Phase 2**: TypeScript migration
-3. **Phase 3**: Authentication system
-4. **Phase 4**: Performance optimization
-5. **Phase 5**: Feature enhancements
+1. **Single User**: Designed for local/personal use
+2. **No Encryption**: Data stored in plain SQLite
+3. **No Offline AI**: Requires internet for AI responses
+4. **Limited Export**: Currently only JSON format
 
-## Resources
+## Completed Features ✓
 
-### Original Implementation
-- Source code: `/aitherapist-main/`
-- API examples: `/aitherapist-main/test-api.html`
+1. ✓ **Security**: API keys in env vars, input validation, rate limiting
+2. ✓ **TypeScript**: Full TypeScript implementation
+3. ✓ **Core Features**: Profile, sessions, AI chat, history
+4. ✓ **UI/UX**: Responsive Material-UI design
+5. ✓ **Multi-Model AI**: GPT-4, Claude 3, Gemini support
+
+## Next Priorities
+
+1. **Firebase Integration**: Cloud sync option
+2. **Data Encryption**: Secure local storage
+3. **Export Formats**: Add PDF and Markdown
+4. **Crisis Resources**: Emergency protocol system
+5. **Progress Charts**: Data visualization
+
+## Quick Start Commands
+
+```bash
+# Install dependencies
+npm install
+
+# Set up environment
+cp server/.env.example server/.env
+# Add your API keys to server/.env
+
+# Start development
+npm run dev
+
+# Access the app
+# Frontend: http://localhost:3000
+# Backend: http://localhost:3001
+```
 
 ### Documentation Files
 All documentation is in `/docs/`:
@@ -134,16 +180,33 @@ All documentation is in `/docs/`:
 9. **[LAUNCH_FEATURES_AND_CONSIDERATIONS.md](./docs/LAUNCH_FEATURES_AND_CONSIDERATIONS.md)** - Launch features, checklist, and missing items
 
 ### Quick Reference
-- For API design: See DATA_MODELS_AND_API.md
-- For AI changes: See AI_INTEGRATION_AND_PROMPTS.md
-- For UI work: See UI_UX_PATTERNS.md
-- For deployment: See ARCHITECTURE_OVERVIEW.md and MIGRATION_AND_REBUILD_GUIDE.md
+- **API Endpoints**: `/server/src/routes/` (profile, sessions)
+- **AI Integration**: `/server/src/services/ai/`
+- **UI Components**: `/client/src/pages/` and `/client/src/components/`
+- **Database Schema**: `/server/src/services/database/sqlite.ts`
+- **Environment Config**: `/server/.env.example`
 
-## Remember
+## Important Reminders
 
-This is a mental health application. User safety and data privacy are paramount. Always:
-- Preserve therapeutic best practices
-- Maintain crisis intervention protocols
-- Protect user data
-- Test thoroughly before deployment
-- Keep responses supportive and non-judgmental
+This is a mental health support application. Always:
+- Maintain therapeutic best practices in AI prompts
+- Include crisis resources and disclaimers
+- Protect user data with local-first approach
+- Test AI responses across all models
+- Keep interactions supportive and non-judgmental
+- Never replace professional mental health care
+
+## Environment Variables
+
+Required in `server/.env`:
+```
+# AI API Keys (at least one required)
+OPENAI_API_KEY=your-key
+ANTHROPIC_API_KEY=your-key
+GOOGLE_API_KEY=your-key
+
+# Optional
+DEFAULT_AI_MODEL=gpt-4-turbo-preview
+DEFAULT_TIMEZONE=UTC
+PORT=3001
+```

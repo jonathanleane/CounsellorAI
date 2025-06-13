@@ -58,5 +58,8 @@
   "bugs": {
     "url": "https://github.com/yourusername/counsellor-ai/issues"
   },
-  "homepage": "https://github.com/yourusername/counsellor-ai#readme"
+  "homepage": "https://github.com/yourusername/counsellor-ai#readme",
+  "dependencies": {
+    "colors": "^1.4.0"
+  }
 }

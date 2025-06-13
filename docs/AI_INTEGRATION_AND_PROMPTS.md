@@ -1,46 +1,54 @@
 # AI Integration and Prompting System
 
+> **Note**: This document reflects the current implementation as of June 2025. For the most up-to-date information, see the actual implementation in `/server/src/services/ai/`.
+
 ## AI Service Architecture
 
-### Supported Models
+### Supported Models (Implemented)
 
-1. **OpenAI GPT-4.5-preview** (Current Default)
+1. **OpenAI GPT-4** (`gpt-4-turbo-preview`)
    - Primary therapy model
+   - Default model for new sessions
+   - 128,000 token context window
    - JSON response format support
-   - 16,384 max tokens
 
-2. **OpenAI o3** (Planned)
-   - Advanced reasoning capabilities
-   - Enhanced safety features
-   - Structured output support
+2. **Anthropic Claude 3 Sonnet** (`claude-3-sonnet-20240229`)
+   - Alternative therapy model
+   - 200,000 token context window
+   - Lower cost than GPT-4
+   - Good balance of capability and speed
 
-3. **Anthropic Claude 3.7 Sonnet** (Current)
-   - Alternative model option
-   - Streaming responses
-   - Thinking mode support (16,000 budget tokens)
-   - 32,000 max output tokens
-
-4. **Anthropic Claude 4 Opus** (Planned)
-   - Enhanced thinking mode
-   - Superior context understanding
-   - Advanced safety alignment
-
-5. **Google Gemini** (Planned)
-   - Multi-modal capabilities
+3. **Google Gemini 1.5 Flash** (`gemini-1.5-flash`)
    - Cost-effective option
-   - Long context window
+   - 1 million token context window
+   - Fast response times
+   - Good for longer conversations
 
-### AI Service (`fetch-ai.js`)
+### AI Service Implementation
 
-The AI service provides three main functions:
+Location: `/server/src/services/ai/index.ts`
 
-1. **generateResponse**: Main conversation responses
-2. **extractPersonalDetails**: Intake session analysis
-3. **generateSummary**: Session summarization
+The AI service provides a unified interface for all models:
+
+```typescript
+class AIService {
+  async generateResponse(messages, userProfile, model?: AIModel): Promise<AIResponse>
+  async generateSummary(messages, sessionData, model?: AIModel): Promise<SummaryResponse>
+  async generateTherapistGreeting(context, userProfile, model?: AIModel): Promise<string>
+}
+```
+
+Key features:
+- Automatic model fallback on errors
+- Cost estimation for each response
+- Token usage tracking
+- Consistent error handling
 
 ## Core Therapy Prompt
 
-The system uses a comprehensive prompt that defines the AI therapist's behavior:
+Location: `/server/src/services/ai/therapyPrompt.ts`
+
+The therapy prompt is carefully crafted to ensure therapeutic best practices:
 
 ### Key Instructions:
 1. Provide a non-judgmental, supportive space
@@ -48,6 +56,9 @@ The system uses a comprehensive prompt that defines the AI therapist's behavior:
 3. Periodically check understanding
 4. Avoid physical descriptions or third-person language
 5. Analyze patterns in moods, mindsets, and behaviors
+6. Adapt communication style to user preferences
+7. Remember previous sessions for continuity
+8. Generate appropriate greetings based on time since last session
 6. Offer evidence-based techniques (CBT, mindfulness)
 7. Handle crisis situations appropriately
 8. Respect user autonomy while challenging maladaptive patterns
@@ -115,29 +126,40 @@ The AI tracks information in 8 structured categories:
 
 ## AI Response Generation
 
-### OpenAI Implementation
-```javascript
+### Model Configurations
+
+#### OpenAI GPT-4
+```typescript
 {
-  model: 'gpt-4.5-preview',
+  model: 'gpt-4-turbo-preview',
   messages: apiMessages,
   temperature: 0.7,
-  max_tokens: 16384,
-  response_format: { type: "json_object" }  // For summaries
+  max_tokens: 4096,
+  response_format: { type: "json_object" }  // For structured responses
 }
 ```
 
-### Claude Implementation
-```javascript
+#### Anthropic Claude 3
+```typescript
 {
-  model: 'claude-3-7-sonnet-20250219',
-  max_tokens: 32000,
-  temperature: 1.0,  // Required for thinking mode
+  model: 'claude-3-sonnet-20240229',
   messages: formattedMessages,
-  thinking: {
-    type: "enabled",
-    budget_tokens: 16000
-  },
-  betas: ["output-128k-2025-02-19"]
+  max_tokens: 4096,
+  temperature: 0.7
+}
+```
+
+#### Google Gemini
+```typescript
+{
+  model: 'gemini-1.5-flash',
+  contents: [{
+    parts: [{ text: prompt }]
+  }],
+  generationConfig: {
+    temperature: 0.7,
+    maxOutputTokens: 4096
+  }
 }
 ```
 
@@ -159,6 +181,54 @@ System monitors for self-harm indicators and provides appropriate resources
 3. **Timeout Handling**: Graceful degradation
 4. **Model Switching**: Automatic fallback to available model
 
+## Implementation Guide
+
+### Adding a New AI Model
+
+1. **Update Types** (`/server/src/services/ai/types.ts`):
+   ```typescript
+   export type AIModel = 'gpt-4-turbo-preview' | 'claude-3-sonnet-20240229' | 'gemini-1.5-flash' | 'your-new-model';
+   ```
+
+2. **Add Provider Class** (`/server/src/services/ai/providers/`):
+   - Implement the `AIProvider` interface
+   - Handle authentication and API calls
+   - Map responses to standard format
+
+3. **Update AI Service** (`/server/src/services/ai/index.ts`):
+   - Add model to the switch statement
+   - Configure cost estimation
+
+### Modifying Therapy Behavior
+
+1. **Edit System Prompt** (`/server/src/services/ai/therapyPrompt.ts`):
+   - Adjust therapeutic approach
+   - Modify response style
+   - Add new guidelines
+
+2. **Update Greeting Logic** (`/server/src/services/ai/index.ts`):
+   - Modify `generateTherapistGreeting` method
+   - Adjust time-based greetings
+
+3. **Enhance Summary Generation**:
+   - Edit summary prompt structure
+   - Add new pattern detection
+
+## Testing AI Changes
+
+```bash
+# Test specific model
+node test-full-api.js
+
+# Test conversation flow
+node test-app-flow.js
+
+# Manual testing with curl
+curl -X POST http://localhost:3001/api/test/ai \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Test message", "model": "gpt-4-turbo-preview"}'
+```
+
 ## Future Enhancements
 
 1. **Voice Integration**: Speech-to-text and text-to-speech
@@ -166,3 +236,5 @@ System monitors for self-harm indicators and provides appropriate resources
 3. **Advanced Memory**: Vector database for better recall
 4. **Personalized Models**: Fine-tuning on user patterns
 5. **Therapeutic Protocols**: Structured intervention programs
+6. **Group Therapy Mode**: Multi-user sessions
+7. **Therapist Supervision**: Human-in-the-loop option
