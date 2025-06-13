@@ -1,7 +1,33 @@
 # Claude Assistant Instructions - CounsellorAI
 
+## ⚠️ CRITICAL SECURITY WARNING
+**This application is in DEVELOPMENT ONLY status. It has critical security vulnerabilities:**
+- ❌ No database encryption (all therapy data stored in plaintext)
+- ❌ No authentication system (anyone can access all data)
+- ❌ SQL injection vulnerabilities
+- ❌ Sensitive data exposed in logs
+- ❌ No input validation on critical endpoints
+
+**DO NOT USE FOR REAL THERAPY DATA UNTIL SECURITY ISSUES ARE RESOLVED**
+
 ## Project Overview
 This is an AI-powered therapy companion application that has been rebuilt from scratch with modern architecture. The application supports multiple AI models (OpenAI GPT-4, Anthropic Claude 3, Google Gemini) and provides a complete therapy session experience with persistent user profiles, session history, and AI-generated insights.
+
+## 🚨 Current Priority Tasks (See TODO.md for full list)
+
+### Critical Security Fixes (Work on these FIRST):
+1. **Add development warning to README.md**
+2. **Implement database encryption** (all data currently plaintext!)
+3. **Add authentication system** (no login/security exists)
+4. **Fix SQL injection** in sqlite.ts:207
+5. **Remove sensitive data from logs** (use redactSensitiveData)
+6. **Add Zod validation** to all API endpoints
+
+### High Priority Bugs:
+- ~~Hardcoded AI model ignoring user preferences~~ ✓ Fixed
+- Memory leak in conversation timer
+- ~~Environment variable mismatch~~ ✓ Already correct (GOOGLE_AI_API_KEY)
+- Race conditions in profile loading
 
 ## Key Project Context
 

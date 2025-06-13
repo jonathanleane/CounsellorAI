@@ -6,6 +6,14 @@ import { logger } from '../utils/logger';
 import { formatInTimeZone } from 'date-fns-tz';
 import { sanitizeUserInput, detectInjectionAttempt } from '../utils/security';
 import { mergePersonalDetails, sanitizePersonalDetails } from '../utils/personalDetailsMerger';
+import { 
+  validateBody, 
+  validateQuery, 
+  createSessionSchema, 
+  addMessageSchema, 
+  endSessionSchema, 
+  limitQuerySchema 
+} from '../validation/schemas';
 
 const router = Router();
 
@@ -30,9 +38,9 @@ router.get('/', async (req, res, next) => {
 });
 
 // Get recent sessions
-router.get('/recent', async (req, res, next) => {
+router.get('/recent', validateQuery(limitQuerySchema), async (req, res, next) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 5;
+    const limit = req.query.limit || 5;
     const db = getDatabase();
     const conversations = await db.getRecentConversations(limit);
     
@@ -77,7 +85,7 @@ router.get('/:id', async (req, res, next) => {
 });
 
 // Create new session
-router.post('/', aiRateLimiter, async (req, res, next) => {
+router.post('/', validateBody(createSessionSchema), aiRateLimiter, async (req, res, next) => {
   try {
     const { session_type, initial_mood, model } = req.body;
     const db = getDatabase();
@@ -183,7 +191,7 @@ Could you tell me a bit about yourself? For instance, what's your current living
 });
 
 // Add message to session
-router.post('/:id/messages', aiRateLimiter, async (req, res, next) => {
+router.post('/:id/messages', validateBody(addMessageSchema), aiRateLimiter, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { content } = req.body;
@@ -260,7 +268,7 @@ router.post('/:id/messages', aiRateLimiter, async (req, res, next) => {
 });
 
 // End session
-router.post('/:id/end', async (req, res, next) => {
+router.post('/:id/end', validateBody(endSessionSchema), async (req, res, next) => {
   try {
     const { id } = req.params;
     const { duration } = req.body;
@@ -386,6 +394,12 @@ async function generateSessionSummary(
       learned_details: learnedDetails ? JSON.stringify(learnedDetails) : null,
       learning_changes: learningChanges.length > 0 ? JSON.stringify(learningChanges) : null
     });
+    
+    // If this was an intake session, mark intake as completed
+    if (conversation.session_type === 'intake') {
+      await db.updateProfile('intake_completed', 1); // SQLite stores boolean as 0/1
+      logger.info(`Marked intake as completed for user after session ${conversationId}`);
+    }
     
     logger.info(`Session ${conversationId} summary generated successfully`);
   } catch (error) {

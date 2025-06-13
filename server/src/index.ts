@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -10,6 +11,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 import { errorHandler } from './middleware/errorHandler';
 import { rateLimiter } from './middleware/rateLimiter';
+import { csrfProtection, csrfErrorHandler, getCsrfToken } from './middleware/csrf';
 import { validateEnv } from './config/validateEnv';
 import { logger } from './utils/logger';
 import { initializeDatabase } from './services/database';
@@ -40,8 +42,19 @@ app.use(helmet({
 }));
 
 app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Cookie parser for CSRF
+app.use(cookieParser());
+
+// Add request size limits to prevent DoS attacks
+app.use(express.json({ 
+  limit: '1mb',  // Limit JSON payloads to 1MB (reduced from 10mb for security)
+  strict: true   // Only accept arrays and objects
+}));
+app.use(express.urlencoded({ 
+  extended: true, 
+  limit: '1mb'   // Limit URL-encoded payloads to 1MB (reduced from 10mb for security)
+}));
 
 // Serve test page in development
 if (process.env.NODE_ENV === 'development') {
@@ -52,6 +65,12 @@ if (process.env.NODE_ENV === 'development') {
 
 // Rate limiting
 app.use('/api/', rateLimiter);
+
+// CSRF token endpoint (must be before CSRF protection)
+app.get('/api/csrf-token', getCsrfToken);
+
+// Apply CSRF protection to all state-changing routes
+app.use('/api/', csrfProtection);
 
 // API Routes
 app.use('/api/sessions', sessionRoutes);
@@ -69,6 +88,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Error handling
+app.use(csrfErrorHandler);
 app.use(errorHandler);
 
 // Initialize database and start server

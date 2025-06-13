@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { getDatabase } from '../services/database';
 import { logger } from '../utils/logger';
+import { redactSensitiveData, createSafeLogObject } from '../utils/redaction';
+import { validateBody, createProfileSchema, updateProfileSchema, updateBrainSchema } from '../validation/schemas';
 
 const router = Router();
 
@@ -11,7 +13,7 @@ router.get('/', async (req, res, next) => {
     const db = getDatabase();
     const profile = await db.getProfile();
     
-    logger.info('Raw profile from database:', profile);
+    logger.info('Profile fetched from database:', createSafeLogObject(profile));
     
     if (!profile) {
       logger.warn('Profile not found in database');
@@ -37,17 +39,68 @@ router.get('/', async (req, res, next) => {
       intake_completed: Boolean(profile.intake_completed)
     };
     
-    logger.info('Parsed profile being sent to client:', parsedProfile);
+    logger.info('Parsed profile ready for client:', createSafeLogObject(parsedProfile));
     
     // Add stats to the profile response
     const conversations = await db.getAllConversations();
+    
+    // Calculate streak
+    const calculateStreak = () => {
+      if (conversations.length === 0) return 0;
+      
+      // Sort sessions by date (newest first)
+      const sortedSessions = conversations
+        .filter(c => c.status === 'completed')
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      if (sortedSessions.length === 0) return 0;
+      
+      let streak = 0;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Check if there's a session today or yesterday
+      const lastSessionDate = new Date(sortedSessions[0].timestamp);
+      lastSessionDate.setHours(0, 0, 0, 0);
+      
+      const daysDiff = Math.floor((today.getTime() - lastSessionDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // If last session was more than 1 day ago, streak is broken
+      if (daysDiff > 1) return 0;
+      
+      // Count consecutive days
+      let currentDate = new Date(lastSessionDate);
+      streak = 1;
+      
+      for (let i = 1; i < sortedSessions.length; i++) {
+        const sessionDate = new Date(sortedSessions[i].timestamp);
+        sessionDate.setHours(0, 0, 0, 0);
+        
+        const prevDate = new Date(currentDate);
+        prevDate.setDate(prevDate.getDate() - 1);
+        
+        if (sessionDate.getTime() === prevDate.getTime()) {
+          streak++;
+          currentDate = sessionDate;
+        } else if (sessionDate.getTime() < prevDate.getTime()) {
+          // Skip sessions on the same day
+          continue;
+        } else {
+          // Streak broken
+          break;
+        }
+      }
+      
+      return streak;
+    };
+    
     const stats = {
       total_sessions: conversations.length,
       avg_mood: conversations.length > 0 
         ? Math.round(conversations.reduce((sum, c) => sum + (c.initial_mood || 0), 0) / conversations.length)
         : 0,
       total_duration: conversations.reduce((sum, c) => sum + (c.duration || 0), 0),
-      streak: 0 // TODO: Implement streak calculation
+      streak: calculateStreak()
     };
     
     const responseData = {
@@ -55,7 +108,7 @@ router.get('/', async (req, res, next) => {
       stats
     };
     
-    logger.info('Full response being sent to client:', responseData);
+    logger.info('Sending profile response with stats');
     res.json(responseData);
   } catch (error) {
     logger.error('Error fetching profile:', error);
@@ -64,12 +117,12 @@ router.get('/', async (req, res, next) => {
 });
 
 // Create or update profile
-router.post('/', async (req, res, next) => {
+router.post('/', validateBody(createProfileSchema), async (req, res, next) => {
   try {
     const db = getDatabase();
     const profileData = req.body;
     
-    logger.info('Creating/updating profile for:', profileData.name);
+    logger.info('Creating/updating profile for user:', { name: profileData.name });
     
     const savedProfile = await db.createProfile(profileData);
     
@@ -84,12 +137,12 @@ router.post('/', async (req, res, next) => {
 });
 
 // Update existing profile
-router.put('/', async (req, res, next) => {
+router.put('/', validateBody(updateProfileSchema), async (req, res, next) => {
   try {
     const db = getDatabase();
     const profileData = req.body;
     
-    logger.info('Updating profile for:', profileData.name);
+    logger.info('Updating profile for user:', { name: profileData.name });
     
     // Get existing profile
     const existingProfile = await db.getProfile();
@@ -151,7 +204,7 @@ router.get('/brain', async (req, res, next) => {
 });
 
 // Update therapist brain data
-router.post('/brain', async (req, res, next) => {
+router.post('/brain', validateBody(updateBrainSchema), async (req, res, next) => {
   try {
     const { category, field, value } = req.body;
     

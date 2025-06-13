@@ -8,15 +8,57 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Important for CSRF cookies
 });
+
+// Store CSRF token
+let csrfToken: string | null = null;
+
+// Function to fetch CSRF token
+async function fetchCsrfToken() {
+  try {
+    const response = await axios.get(`${API_BASE}/csrf-token`, { withCredentials: true });
+    csrfToken = response.data.csrfToken;
+    return csrfToken;
+  } catch (error) {
+    console.error('Failed to fetch CSRF token:', error);
+    throw error;
+  }
+}
+
+// Add request interceptor to include CSRF token
+api.interceptors.request.use(
+  async (config) => {
+    // Only add CSRF token for state-changing methods
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(config.method?.toUpperCase() || '')) {
+      if (!csrfToken) {
+        await fetchCsrfToken();
+      }
+      if (csrfToken) {
+        config.headers['x-csrf-token'] = csrfToken;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // Add response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
       // Handle unauthorized
       window.location.href = '/login';
+    } else if (error.response?.status === 403 && error.response?.data?.code === 'CSRF_VALIDATION_FAILED') {
+      // CSRF token invalid, fetch new one and retry
+      csrfToken = null;
+      await fetchCsrfToken();
+      
+      // Retry the original request with new token
+      const originalRequest = error.config;
+      originalRequest.headers['x-csrf-token'] = csrfToken;
+      return api(originalRequest);
     }
     return Promise.reject(error);
   }

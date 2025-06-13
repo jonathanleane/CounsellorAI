@@ -29,6 +29,16 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const profile = useProfileStore((state) => state.profile);
+  
+  // Ensure profile is loaded
+  if (!profile) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <LinearProgress />
+        <Typography sx={{ mt: 2 }}>Loading profile...</Typography>
+      </Container>
+    );
+  }
 
   // Fetch recent sessions
   const { data: recentSessions, isLoading: sessionsLoading } = useQuery({

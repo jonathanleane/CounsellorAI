@@ -1,6 +1,14 @@
 # CounsellorAI - Your Open Source AI Therapy Companion 🧠💬
 
-> ⚠️ **CRITICAL SECURITY WARNING**: This application currently stores therapy data unencrypted. See [CRITICAL_SECURITY_UPDATE.md](./CRITICAL_SECURITY_UPDATE.md) for details. DO NOT use for sensitive data until encryption is implemented.
+> ## ⚠️ **DEVELOPMENT ONLY - DO NOT USE FOR REAL THERAPY DATA** ⚠️
+> 
+> **This application has CRITICAL SECURITY VULNERABILITIES:**
+> - ❌ **NO DATABASE ENCRYPTION** - All therapy conversations stored in plaintext
+> - ❌ **NO AUTHENTICATION** - Anyone with access can read all data
+> - ❌ **NO INPUT VALIDATION** - Vulnerable to SQL injection and data corruption
+> - ❌ **SENSITIVE DATA IN LOGS** - Personal information exposed in log files
+> 
+> **This is a development prototype only. DO NOT use for actual therapy sessions or sensitive personal data until these security issues are resolved. See [TODO.md](./TODO.md) for the full list of security issues.**
 
 ## What is CounsellorAI?
 

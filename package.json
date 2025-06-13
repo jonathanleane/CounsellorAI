@@ -63,6 +63,8 @@
   },
   "homepage": "https://github.com/yourusername/counsellor-ai#readme",
   "dependencies": {
-    "colors": "^1.4.0"
+    "colors": "^1.4.0",
+    "cookie-parser": "^1.4.7",
+    "csrf-csrf": "^4.0.3"
   }
 }

@@ -1,5 +1,15 @@
 # Security Policy
 
+## ⚠️ CRITICAL SECURITY WARNING
+
+**This application is currently in DEVELOPMENT ONLY status with the following vulnerabilities:**
+- ❌ **NO DATABASE ENCRYPTION** - All therapy data stored in plaintext
+- ❌ **NO AUTHENTICATION SYSTEM** - No login or access control
+- ⚠️ **LIMITED INPUT VALIDATION** - Some endpoints now protected with Zod
+- ⚠️ **NO CSRF PROTECTION** - Vulnerable to cross-site request forgery
+
+**DO NOT USE FOR REAL THERAPY DATA**
+
 ## Reporting Security Vulnerabilities
 
 We take security seriously in CounsellorAI, especially given the sensitive nature of mental health data.
@@ -7,8 +17,8 @@ We take security seriously in CounsellorAI, especially given the sensitive natur
 **Please do not report security vulnerabilities through public GitHub issues.**
 
 Instead, please report them via:
-- Email: security@counsellorai.example.com
-- Use PGP encryption if possible (key available on request)
+- Create a private security advisory on GitHub
+- Or open an issue describing the general area of concern without specifics
 
 ## What to Include
 
@@ -31,20 +41,22 @@ Please include:
 ## Security Considerations
 
 ### Data Protection
-- All user data should be encrypted at rest
-- API keys must never be logged or exposed
-- Sessions should timeout appropriately
+- ❌ **NOT IMPLEMENTED**: Database encryption at rest
+- ✅ API keys protected in environment variables
+- ✅ Sensitive data redacted from logs
+- ⚠️ **PARTIAL**: Session management exists but no timeout
 
 ### API Security
-- Rate limiting is enforced
-- Input validation on all endpoints
-- SQL injection prevention
-- XSS protection
+- ✅ Rate limiting is enforced (100 req/15min)
+- ✅ Input validation with Zod on critical endpoints
+- ✅ SQL injection prevention via whitelisting
+- ⚠️ **PARTIAL**: Basic XSS protection via input sanitization
 
-### Authentication (Future)
-- Strong password requirements
-- Optional 2FA support
-- Secure session management
+### Authentication
+- ❌ **NOT IMPLEMENTED**: No authentication system
+- ❌ **NOT IMPLEMENTED**: No password requirements
+- ❌ **NOT IMPLEMENTED**: No 2FA support
+- ❌ **NOT IMPLEMENTED**: No secure session management
 
 ## Supported Versions
 
@@ -53,13 +65,23 @@ Please include:
 | 1.x.x   | :white_check_mark: |
 | < 1.0   | :x:                |
 
-## Known Security Features
+## Current Security Status
 
+### ✅ Implemented:
 - Environment-based configuration
-- Optional database encryption
-- Sanitized user inputs
-- HTTPS enforcement (production)
-- Security headers via Helmet.js
+- Sanitized user inputs with pattern detection
+- Rate limiting on AI endpoints
+- SQL injection protection via field whitelisting
+- Sensitive data redaction in logs
+- Input validation with Zod schemas
+
+### ❌ NOT Implemented:
+- Database encryption (critical)
+- Authentication system (critical)
+- CSRF protection
+- Session timeouts
+- Security headers (Helmet.js not configured)
+- HTTPS enforcement
 
 ## Acknowledgments
 

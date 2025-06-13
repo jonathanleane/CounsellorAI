@@ -45,15 +45,25 @@ export default function Conversation() {
   const [showLearningSnackbar, setShowLearningSnackbar] = useState(false);
   const [learningMessage, setLearningMessage] = useState('');
 
-  // Timer effect
+  // Timer effect with proper cleanup
   useEffect(() => {
-    const timer = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTimeRef.current.getTime()) / 1000);
-      setSessionDuration(elapsed);
-    }, 1000);
+    let timer: NodeJS.Timeout | null = null;
+    
+    // Only start timer if session is active
+    if (session?.data?.status === 'active') {
+      timer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTimeRef.current.getTime()) / 1000);
+        setSessionDuration(elapsed);
+      }, 1000);
+    }
 
-    return () => clearInterval(timer);
-  }, []);
+    // Cleanup function that properly clears the timer
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
+  }, [session?.data?.status]); // Re-run when session status changes
 
   // Fetch session data
   const { data: session, isLoading: sessionLoading } = useQuery({
@@ -117,10 +127,21 @@ export default function Conversation() {
   // Create new session if we're on /conversation/new
   useEffect(() => {
     if (id === 'new' && !createSessionMutation.isPending && !createSessionMutation.isSuccess) {
+      // Get user's model preference from profile
+      const profileData = useProfileStore.getState().profile;
+      let modelPreference;
+      
+      if (profileData?.preferences) {
+        const prefs = typeof profileData.preferences === 'string' 
+          ? JSON.parse(profileData.preferences) 
+          : profileData.preferences;
+        modelPreference = prefs.ai_model;
+      }
+      
       // eslint-disable-next-line react-hooks/exhaustive-deps
       createSessionMutation.mutate({
         session_type: 'standard',
-        model: 'gpt-4.5-preview',
+        ...(modelPreference && { model: modelPreference }),
       });
     }
   }, [id]);
