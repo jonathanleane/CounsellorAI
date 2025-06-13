@@ -18,7 +18,7 @@ export class AIService {
 
     // Set default provider and model
     this.currentProvider = config?.defaultProvider || AIProvider.OpenAI;
-    this.currentModel = config?.defaultModel || AIModel.GPT4_Turbo;
+    this.currentModel = config?.defaultModel || AIModel.GPT45_Preview;
   }
 
   private getOrCreateProvider(provider: AIProvider): any {
@@ -59,9 +59,9 @@ export class AIService {
     } catch (error) {
       logger.error(`Error with ${selectedModel}, attempting fallback`, error);
       
-      // Attempt fallback to GPT-4
-      if (selectedModel !== AIModel.GPT4_Turbo) {
-        return this.generateResponse(messages, userProfile, AIModel.GPT4_Turbo);
+      // Attempt fallback to GPT-4.5 Preview
+      if (selectedModel !== AIModel.GPT45_Preview) {
+        return this.generateResponse(messages, userProfile, AIModel.GPT45_Preview);
       }
       
       throw error;
@@ -103,16 +103,20 @@ export class AIService {
 
   private getProviderForModel(model: AIModel): AIProvider {
     switch (model) {
+      case AIModel.GPT45_Preview:
       case AIModel.GPT4_Turbo:
       case AIModel.GPT4:
       case AIModel.O3:
         return AIProvider.OpenAI;
       
+      case AIModel.Claude4_Opus:
+      case AIModel.Claude4_Sonnet:
       case AIModel.Claude3_Opus:
       case AIModel.Claude3_Sonnet:
-      case AIModel.Claude4_Opus:
         return AIProvider.Anthropic;
       
+      case AIModel.Gemini25_Pro:
+      case AIModel.Gemini25_Flash:
       case AIModel.Gemini_Pro:
       case AIModel.Gemini_Ultra:
         return AIProvider.Google;
@@ -136,14 +140,17 @@ export class AIService {
   // Get available models
   getAvailableModels(): Array<{ model: AIModel; name: string; provider: AIProvider; available: boolean }> {
     return [
+      { model: AIModel.GPT45_Preview, name: 'GPT-4.5 Preview', provider: AIProvider.OpenAI, available: this.isProviderAvailable(AIProvider.OpenAI) },
       { model: AIModel.GPT4_Turbo, name: 'GPT-4 Turbo', provider: AIProvider.OpenAI, available: this.isProviderAvailable(AIProvider.OpenAI) },
       { model: AIModel.GPT4, name: 'GPT-4', provider: AIProvider.OpenAI, available: this.isProviderAvailable(AIProvider.OpenAI) },
       { model: AIModel.O3, name: 'O3 (Coming Soon)', provider: AIProvider.OpenAI, available: false },
+      { model: AIModel.Claude4_Opus, name: 'Claude 4 Opus', provider: AIProvider.Anthropic, available: this.isProviderAvailable(AIProvider.Anthropic) },
+      { model: AIModel.Claude4_Sonnet, name: 'Claude 4 Sonnet', provider: AIProvider.Anthropic, available: this.isProviderAvailable(AIProvider.Anthropic) },
       { model: AIModel.Claude3_Opus, name: 'Claude 3 Opus', provider: AIProvider.Anthropic, available: this.isProviderAvailable(AIProvider.Anthropic) },
       { model: AIModel.Claude3_Sonnet, name: 'Claude 3 Sonnet', provider: AIProvider.Anthropic, available: this.isProviderAvailable(AIProvider.Anthropic) },
-      { model: AIModel.Claude4_Opus, name: 'Claude 4 Opus (Coming Soon)', provider: AIProvider.Anthropic, available: false },
+      { model: AIModel.Gemini25_Pro, name: 'Gemini 2.5 Pro', provider: AIProvider.Google, available: this.isProviderAvailable(AIProvider.Google) },
+      { model: AIModel.Gemini25_Flash, name: 'Gemini 2.5 Flash', provider: AIProvider.Google, available: this.isProviderAvailable(AIProvider.Google) },
       { model: AIModel.Gemini_Pro, name: 'Gemini Pro', provider: AIProvider.Google, available: this.isProviderAvailable(AIProvider.Google) },
-      { model: AIModel.Gemini_Ultra, name: 'Gemini Ultra (Coming Soon)', provider: AIProvider.Google, available: false },
     ];
   }
 
@@ -151,17 +158,21 @@ export class AIService {
   estimateCost(model: AIModel, inputTokens: number, outputTokens: number): number {
     // Cost per 1K tokens (rough estimates)
     const costs: Record<AIModel, { input: number; output: number }> = {
+      [AIModel.GPT45_Preview]: { input: 0.015, output: 0.045 }, // Estimated based on GPT-4.5 being more expensive
       [AIModel.GPT4_Turbo]: { input: 0.01, output: 0.03 },
       [AIModel.GPT4]: { input: 0.03, output: 0.06 },
       [AIModel.O3]: { input: 0.02, output: 0.04 }, // Estimated
+      [AIModel.Claude4_Opus]: { input: 0.015, output: 0.075 },
+      [AIModel.Claude4_Sonnet]: { input: 0.003, output: 0.015 },
       [AIModel.Claude3_Opus]: { input: 0.015, output: 0.075 },
       [AIModel.Claude3_Sonnet]: { input: 0.003, output: 0.015 },
-      [AIModel.Claude4_Opus]: { input: 0.02, output: 0.08 }, // Estimated
+      [AIModel.Gemini25_Pro]: { input: 0.002, output: 0.008 }, // Estimated
+      [AIModel.Gemini25_Flash]: { input: 0.001, output: 0.004 }, // Estimated
       [AIModel.Gemini_Pro]: { input: 0.0005, output: 0.0015 },
-      [AIModel.Gemini_Ultra]: { input: 0.002, output: 0.006 }, // Estimated
+      [AIModel.Gemini_Ultra]: { input: 0.002, output: 0.006 }, // Deprecated
     };
 
-    const modelCost = costs[model] || costs[AIModel.GPT4_Turbo];
+    const modelCost = costs[model] || costs[AIModel.GPT45_Preview];
     return (inputTokens / 1000) * modelCost.input + (outputTokens / 1000) * modelCost.output;
   }
 }

@@ -2,15 +2,17 @@
 
 ## Critical Implementation Details
 
-### API Keys (Currently Hardcoded - MUST CHANGE)
-- OpenAI and Anthropic API keys are hardcoded in `fetch-ai.js`
-- **SECURITY RISK**: Move to environment variables immediately
-- Keys are exposed in the current implementation
+### API Keys (RESOLVED)
+- ✅ API keys are now properly stored in environment variables
+- ✅ Keys are loaded from `server/.env` file
+- ✅ Validation on startup ensures required keys are present
+- ✅ Keys are never logged or exposed in responses
 
 ### Database Configuration
 - System supports both Firebase and SQLite
 - Toggle via `USE_FIREBASE` environment variable
-- Firebase is currently the primary database
+- SQLite is the default for local use
+- Firebase integration complete with migration tools
 
 ### Session Management
 
@@ -33,16 +35,25 @@
 ### AI Response Generation
 
 #### Model-Specific Implementation
-**GPT-4.5**:
+**GPT-4.5 Preview**:
 - Uses JSON response format for summaries
 - Standard REST API calls
-- 16K token limit
+- 128K token context window
+- Lazy initialization on first use
+- Enhanced reasoning capabilities
 
-**Claude 3.7**:
-- Uses streaming API
-- Thinking mode enabled (16K budget)
-- Manual JSON extraction for summaries
-- Temperature must be exactly 1.0
+**Claude 4 Opus/Sonnet**:
+- Standard API (non-streaming)
+- 200K token context window
+- Claude 4 Opus: Premium model with extended thinking
+- Claude 4 Sonnet: Balanced cost-effectiveness
+- Lazy initialization on first use
+
+**Gemini 2.5 Pro/Flash**:
+- Gemini 2.5 Pro: 2M token context, deep thinking
+- Gemini 2.5 Flash: 1M token context, lightning fast
+- Most cost-effective options
+- Lazy initialization on first use
 
 #### Prompt Assembly Order
 1. Main therapy instructions
@@ -158,20 +169,29 @@ conversations/
 4. Session end and summary
 5. Brain data editing
 6. Profile updates
+7. Security features (PII redaction, injection protection)
+8. AI provider lazy loading
 
 #### API Testing
-- `test-api.html` - Direct API testing
-- `test-openai.js` - Backend AI testing
+- `test-full-api.js` - Comprehensive API testing
+- `test-app-flow.js` - End-to-end application flow
+- `test-ai-direct.js` - Direct AI service testing
+- `test-lazy-loading.js` - Provider initialization testing
 
 ### Deployment Notes
 
 #### Environment Setup
 ```bash
-# Required
+# Required (at least one AI provider)
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
+GOOGLE_API_KEY=...
+
+# Optional
 PORT=3001
 NODE_ENV=production
+DEFAULT_AI_MODEL=gpt-4.5-preview
+DEFAULT_TIMEZONE=UTC
 
 # Firebase (if using)
 USE_FIREBASE=true
@@ -191,11 +211,11 @@ USE_FIREBASE=true
 
 ## Code Smells to Address
 
-1. **Hardcoded API Keys**: Critical security issue
+1. ~~**Hardcoded API Keys**: Critical security issue~~ ✅ FIXED
 2. **Single Profile System**: Limits scalability
-3. **Timezone Hardcoding**: Not user-friendly
-4. **No Request Validation**: Security risk
-5. **Missing TypeScript**: Type safety needed
+3. **Timezone Hardcoding**: Not user-friendly (still hardcoded)
+4. ~~**No Request Validation**: Security risk~~ ✅ FIXED with input sanitization
+5. ~~**Missing TypeScript**: Type safety needed~~ ✅ FIXED - Full TypeScript
 6. **Limited Error Recovery**: Needs improvement
 
 ## Future Architecture Considerations

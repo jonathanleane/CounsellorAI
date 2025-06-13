@@ -6,18 +6,22 @@ export enum AIProvider {
 
 export enum AIModel {
   // OpenAI Models
+  GPT45_Preview = 'gpt-4.5-preview',
   GPT4_Turbo = 'gpt-4-turbo-preview',
   GPT4 = 'gpt-4',
   O3 = 'o3-preview', // Placeholder for upcoming model
   
   // Anthropic Models
+  Claude4_Opus = 'claude-4-opus',
+  Claude4_Sonnet = 'claude-4-sonnet',
   Claude3_Opus = 'claude-3-opus-20240229',
   Claude3_Sonnet = 'claude-3-sonnet-20240229',
-  Claude4_Opus = 'claude-4-opus', // Placeholder for upcoming model
   
   // Google Models
+  Gemini25_Pro = 'gemini-2.5-pro',
+  Gemini25_Flash = 'gemini-2.5-flash',
   Gemini_Pro = 'gemini-pro',
-  Gemini_Ultra = 'gemini-ultra' // Placeholder for upcoming model
+  Gemini_Ultra = 'gemini-ultra' // Deprecated
 }
 
 export interface AIResponse {

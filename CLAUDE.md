@@ -8,15 +8,19 @@ This is an AI-powered therapy companion application that has been rebuilt from s
 ### Current Architecture
 - **Frontend**: React 18 with TypeScript, Material-UI 5, Vite
 - **Backend**: Express.js with TypeScript on Node.js 18+
-- **Database**: SQLite (local storage), Firebase support planned
-- **AI Models**: OpenAI GPT-4, Anthropic Claude 3, Google Gemini 1.5
+- **Database**: SQLite (local storage), Firebase support completed
+- **AI Models**: OpenAI GPT-4.5, Anthropic Claude 4, Google Gemini 2.5
 - **State Management**: Zustand (client), React Query (server state)
+- **Security**: PII redaction in logs, prompt injection protection, input sanitization
 
 ### Security Implementation
 1. **API Keys**: Properly managed via environment variables in `.env`
 2. **Authentication**: Local-first design (no auth needed for personal use)
 3. **Input Validation**: Implemented with Joi/Zod schemas
 4. **Rate Limiting**: API endpoints protected with express-rate-limit
+5. **PII Protection**: Automatic redaction of sensitive data in logs
+6. **Prompt Injection Protection**: Input sanitization and dangerous pattern detection
+7. **Lazy AI Provider Loading**: Providers only initialized when needed, improving security and performance
 
 ## When Working on This Project
 
@@ -50,7 +54,7 @@ CounsellorAI/
 
 #### Modifying AI Behavior
 1. Edit `/server/src/services/ai/therapyPrompt.ts` for prompt changes
-2. Test with all three AI models (GPT-4, Claude 3, Gemini)
+2. Test with all three AI models (GPT-4.5, Claude 4, Gemini 2.5)
 3. Use `/server/src/services/ai/index.ts` for model abstraction
 4. Always maintain therapeutic best practices
 
@@ -76,6 +80,12 @@ node test-full-api.js
 # Test complete application flow
 node test-app-flow.js
 
+# Test AI service directly
+node test-ai-direct.js
+
+# Test lazy loading of AI providers
+node test-lazy-loading.js
+
 # Quick setup for testing
 node quick-setup.js
 
@@ -98,7 +108,7 @@ curl http://localhost:3001/api/health
 const response = await aiService.generateResponse(
   messages,        // Conversation history
   userProfile,     // User context
-  model           // 'gpt-4-turbo-preview' | 'claude-3-sonnet-20240229' | 'gemini-1.5-flash'
+  model           // 'gpt-4.5-preview' | 'claude-4-opus' | 'gemini-2.5-pro'
 );
 ```
 
@@ -117,6 +127,38 @@ const response = await aiService.generateResponse(
   - Health info, mental health screening
   - Sensitive topics to avoid
 
+## Recent Updates
+
+### Automatic Learning System (NEW)
+- **Feature**: AI automatically learns and remembers information from conversations
+- **Implementation**:
+  - Extracts personal details at session end when ENABLE_AUTO_LEARNING=true
+  - Intelligently merges new information with existing knowledge
+  - Tracks changes and shows users what was learned
+  - Privacy-focused with sensitive data sanitization
+- **Files Modified**:
+  - `/server/src/routes/sessions.ts` - Added learning trigger in session summary
+  - `/server/src/utils/personalDetailsMerger.ts` - New intelligent merging logic
+  - `/server/src/services/database/sqlite.ts` - Added learning storage columns
+  - `/client/src/pages/History.tsx` - Shows learned information
+  - `/client/src/pages/Conversation.tsx` - Learning notification on session end
+- **Configuration**: Set ENABLE_AUTO_LEARNING=true in .env to enable
+
+### Updated AI Models (NEW)
+- **Default Model**: Now uses GPT-4.5 Preview (from GPT-4 Turbo)
+- **Claude 4**: Updated to Claude 4 Opus/Sonnet (latest Anthropic models)
+- **Gemini 2.5**: Updated to Gemini 2.5 Pro/Flash (latest Google models)
+- **Model Enums**: Added new models, reordered to show latest first
+- **Automatic Fallback**: Falls back to GPT-4.5 Preview if other models fail
+
+### Other Recent Updates
+- Firebase configuration check
+- Lazy provider initialization to prevent server crashes
+- GitHub Actions for CI/CD
+- Fixed timestamp format issues
+- PII redaction in logs
+- Prompt injection protection
+
 ## Current Issues and Solutions
 
 1. **Timestamp Display**: Fixed by using ISO format in SQLite
@@ -124,29 +166,38 @@ const response = await aiService.generateResponse(
 3. **Profile Navigation**: Force page reload after creation
 4. **CORS**: Handled by Vite proxy configuration
 5. **Database Path**: Auto-created in project root
+6. **Security**: Implemented PII redaction and prompt injection protection
+7. **Performance**: Lazy loading of AI providers reduces startup time
 
 ## Known Limitations
 
 1. **Single User**: Designed for local/personal use
-2. **No Encryption**: Data stored in plain SQLite
+2. **No Database Encryption**: Data stored in plain SQLite (encryption planned)
 3. **No Offline AI**: Requires internet for AI responses
 4. **Limited Export**: Currently only JSON format
+5. **No Voice Support**: Text-only interface
+6. **Limited Crisis Detection**: Basic keyword matching only
 
 ## Completed Features ✓
 
-1. ✓ **Security**: API keys in env vars, input validation, rate limiting
+1. ✓ **Security**: API keys in env vars, input validation, rate limiting, PII redaction, prompt injection protection
 2. ✓ **TypeScript**: Full TypeScript implementation
 3. ✓ **Core Features**: Profile, sessions, AI chat, history
 4. ✓ **UI/UX**: Responsive Material-UI design
-5. ✓ **Multi-Model AI**: GPT-4, Claude 3, Gemini support
+5. ✓ **Multi-Model AI**: GPT-4.5, Claude 4, Gemini 2.5 support with lazy loading
+6. ✓ **Firebase Support**: Full Firebase integration with migration tools
+7. ✓ **Logging**: Winston logger with automatic PII redaction
+8. ✓ **Session Management**: Auto-greeting, timing precision, summaries
 
 ## Next Priorities
 
-1. **Firebase Integration**: Cloud sync option
-2. **Data Encryption**: Secure local storage
-3. **Export Formats**: Add PDF and Markdown
-4. **Crisis Resources**: Emergency protocol system
-5. **Progress Charts**: Data visualization
+1. **Database Encryption**: Encrypt SQLite at rest
+2. **Export Formats**: Add PDF and Markdown export
+3. **Crisis Resources**: Enhanced detection and emergency protocol system
+4. **Progress Charts**: Data visualization for mood and therapy progress
+5. **Search Functionality**: Search through conversation history
+6. **Session Templates**: CBT exercises and guided therapy tools
+7. **Cost Management**: Token usage tracking and cost estimation
 
 ## Quick Start Commands
 
@@ -173,11 +224,13 @@ All documentation is in `/docs/`:
 2. **[FEATURES_AND_FUNCTIONALITY.md](./docs/FEATURES_AND_FUNCTIONALITY.md)** - Complete feature list and capabilities
 3. **[TECH_STACK_AND_DEPENDENCIES.md](./docs/TECH_STACK_AND_DEPENDENCIES.md)** - All dependencies with versions
 4. **[DATA_MODELS_AND_API.md](./docs/DATA_MODELS_AND_API.md)** - Database schemas and API endpoints
-5. **[AI_INTEGRATION_AND_PROMPTS.md](./docs/AI_INTEGRATION_AND_PROMPTS.md)** - AI service details and prompting
+5. **[AI_INTEGRATION_AND_PROMPTS.md](./docs/AI_INTEGRATION_AND_PROMPTS.md)** - AI service details, prompting, and model configurations
 6. **[UI_UX_PATTERNS.md](./docs/UI_UX_PATTERNS.md)** - Design system and component patterns
 7. **[MIGRATION_AND_REBUILD_GUIDE.md](./docs/MIGRATION_AND_REBUILD_GUIDE.md)** - Step-by-step rebuild process
-8. **[IMPLEMENTATION_NOTES.md](./docs/IMPLEMENTATION_NOTES.md)** - Critical details and known issues
-9. **[LAUNCH_FEATURES_AND_CONSIDERATIONS.md](./docs/LAUNCH_FEATURES_AND_CONSIDERATIONS.md)** - Launch features, checklist, and missing items
+8. **[IMPLEMENTATION_NOTES.md](./docs/IMPLEMENTATION_NOTES.md)** - Critical details, known issues, and workarounds
+9. **[LAUNCH_FEATURES_AND_CONSIDERATIONS.md](./docs/LAUNCH_FEATURES_AND_CONSIDERATIONS.md)** - Launch checklist, missing features, and roadmap
+
+**[SECURITY.md](./SECURITY.md)** - Security policy and vulnerability reporting (root directory)
 
 ### Quick Reference
 - **API Endpoints**: `/server/src/routes/` (profile, sessions)
@@ -206,7 +259,7 @@ ANTHROPIC_API_KEY=your-key
 GOOGLE_API_KEY=your-key
 
 # Optional
-DEFAULT_AI_MODEL=gpt-4-turbo-preview
+DEFAULT_AI_MODEL=gpt-4.5-preview
 DEFAULT_TIMEZONE=UTC
 PORT=3001
 ```

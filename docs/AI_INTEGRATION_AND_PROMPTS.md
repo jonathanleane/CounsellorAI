@@ -1,28 +1,41 @@
 # AI Integration and Prompting System
 
-> **Note**: This document reflects the current implementation as of June 2025. For the most up-to-date information, see the actual implementation in `/server/src/services/ai/`.
+> **Note**: This document reflects the current implementation as of June 2025. For the most up-to-date implementation details, see the actual source code in `/server/src/services/ai/`.
 
 ## AI Service Architecture
 
 ### Supported Models (Implemented)
 
-1. **OpenAI GPT-4** (`gpt-4-turbo-preview`)
+1. **OpenAI GPT-4.5** (`gpt-4.5-preview`)
    - Primary therapy model
    - Default model for new sessions
    - 128,000 token context window
    - JSON response format support
+   - Enhanced reasoning capabilities
 
-2. **Anthropic Claude 3 Sonnet** (`claude-3-sonnet-20240229`)
-   - Alternative therapy model
+2. **Anthropic Claude 4 Opus** (`claude-4-opus`)
+   - Premium therapy model
    - 200,000 token context window
-   - Lower cost than GPT-4
-   - Good balance of capability and speed
+   - Extended thinking capabilities
+   - Superior reasoning and empathy
+   
+3. **Anthropic Claude 4 Sonnet** (`claude-4-sonnet`)
+   - Balanced therapy model
+   - 200,000 token context window
+   - Lower cost than Opus
+   - Fast and efficient
 
-3. **Google Gemini 1.5 Flash** (`gemini-1.5-flash`)
+4. **Google Gemini 2.5 Pro** (`gemini-2.5-pro`)
+   - Advanced reasoning model
+   - 2 million token context window
+   - Enhanced deep thinking
+   - Excellent for complex therapy
+   
+5. **Google Gemini 2.5 Flash** (`gemini-2.5-flash`)
    - Cost-effective option
    - 1 million token context window
-   - Fast response times
-   - Good for longer conversations
+   - Lightning fast responses
+   - Good for routine sessions
 
 ### AI Service Implementation
 
@@ -43,6 +56,8 @@ Key features:
 - Cost estimation for each response
 - Token usage tracking
 - Consistent error handling
+- Lazy provider initialization for improved performance
+- Input sanitization and prompt injection protection
 
 ## Core Therapy Prompt
 
@@ -128,10 +143,10 @@ The AI tracks information in 8 structured categories:
 
 ### Model Configurations
 
-#### OpenAI GPT-4
+#### OpenAI GPT-4.5
 ```typescript
 {
-  model: 'gpt-4-turbo-preview',
+  model: 'gpt-4.5-preview',
   messages: apiMessages,
   temperature: 0.7,
   max_tokens: 4096,
@@ -139,20 +154,20 @@ The AI tracks information in 8 structured categories:
 }
 ```
 
-#### Anthropic Claude 3
+#### Anthropic Claude 4
 ```typescript
 {
-  model: 'claude-3-sonnet-20240229',
+  model: 'claude-4-opus', // or 'claude-4-sonnet'
   messages: formattedMessages,
   max_tokens: 4096,
   temperature: 0.7
 }
 ```
 
-#### Google Gemini
+#### Google Gemini 2.5
 ```typescript
 {
-  model: 'gemini-1.5-flash',
+  model: 'gemini-2.5-pro', // or 'gemini-2.5-flash'
   contents: [{
     parts: [{ text: prompt }]
   }],
@@ -187,17 +202,19 @@ System monitors for self-harm indicators and provides appropriate resources
 
 1. **Update Types** (`/server/src/services/ai/types.ts`):
    ```typescript
-   export type AIModel = 'gpt-4-turbo-preview' | 'claude-3-sonnet-20240229' | 'gemini-1.5-flash' | 'your-new-model';
+   export type AIModel = 'gpt-4.5-preview' | 'claude-4-opus' | 'gemini-2.5-pro' | 'your-new-model';
    ```
 
 2. **Add Provider Class** (`/server/src/services/ai/providers/`):
    - Implement the `AIProvider` interface
    - Handle authentication and API calls
    - Map responses to standard format
+   - Provider will be lazily loaded on first use
 
 3. **Update AI Service** (`/server/src/services/ai/index.ts`):
    - Add model to the switch statement
    - Configure cost estimation
+   - Register provider class for lazy initialization
 
 ### Modifying Therapy Behavior
 
@@ -226,7 +243,7 @@ node test-app-flow.js
 # Manual testing with curl
 curl -X POST http://localhost:3001/api/test/ai \
   -H "Content-Type: application/json" \
-  -d '{"message": "Test message", "model": "gpt-4-turbo-preview"}'
+  -d '{"message": "Test message", "model": "gpt-4.5-preview"}'
 ```
 
 ## Future Enhancements
@@ -238,3 +255,5 @@ curl -X POST http://localhost:3001/api/test/ai \
 5. **Therapeutic Protocols**: Structured intervention programs
 6. **Group Therapy Mode**: Multi-user sessions
 7. **Therapist Supervision**: Human-in-the-loop option
+8. **Enhanced Crisis Detection**: ML-based risk assessment
+9. **Multilingual Support**: Therapy in multiple languages

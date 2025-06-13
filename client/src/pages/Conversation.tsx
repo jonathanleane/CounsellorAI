@@ -14,6 +14,7 @@ import {
   Divider,
   Alert,
   CircularProgress,
+  Snackbar,
 } from '@mui/material';
 import {
   Send as SendIcon,
@@ -44,6 +45,8 @@ export default function Conversation() {
   const [message, setMessage] = useState('');
   const [sessionDuration, setSessionDuration] = useState(0);
   const startTimeRef = useRef<Date>(new Date());
+  const [showLearningSnackbar, setShowLearningSnackbar] = useState(false);
+  const [learningMessage, setLearningMessage] = useState('');
 
   // Timer effect
   useEffect(() => {
@@ -85,7 +88,31 @@ export default function Conversation() {
   const endSessionMutation = useMutation({
     mutationFn: ({ sessionId, duration }: { sessionId: string; duration: number }) =>
       sessionsApi.end(sessionId, duration),
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Wait for the session to be updated with learning data
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Fetch the updated session to check for learning
+      try {
+        const updatedSession = await sessionsApi.get(id!);
+        if (updatedSession.data.learning_changes) {
+          const changes = JSON.parse(updatedSession.data.learning_changes);
+          if (changes.length > 0) {
+            setLearningMessage(`I learned ${changes.length} new thing${changes.length > 1 ? 's' : ''} about you from this session!`);
+            setShowLearningSnackbar(true);
+            
+            // Navigate after showing the snackbar
+            setTimeout(() => {
+              navigate('/history');
+            }, 3000);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking learning data:', error);
+      }
+      
+      // Navigate immediately if no learning data
       navigate('/');
     },
   });
@@ -295,6 +322,22 @@ export default function Conversation() {
           </Alert>
         </Paper>
       )}
+      
+      {/* Learning Notification */}
+      <Snackbar
+        open={showLearningSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setShowLearningSnackbar(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={() => setShowLearningSnackbar(false)} 
+          severity="success" 
+          sx={{ width: '100%' }}
+        >
+          🧠 {learningMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }

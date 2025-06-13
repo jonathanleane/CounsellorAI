@@ -18,7 +18,7 @@ router.post('/ai', aiRateLimiter, async (req, res, next) => {
 
     // Get available models
     const availableModels = aiService.getAvailableModels();
-    const selectedModel = model || AIModel.GPT4_Turbo;
+    const selectedModel = model || AIModel.GPT45_Preview;
     
     // Check if model is available
     const modelInfo = availableModels.find(m => m.model === selectedModel);
@@ -87,7 +87,7 @@ router.post('/ai/summary', aiRateLimiter, async (req, res, next) => {
       return;
     }
 
-    const selectedModel = model || AIModel.GPT4_Turbo;
+    const selectedModel = model || AIModel.GPT45_Preview;
     const summary = await aiService.generateSummary(messages, {}, selectedModel);
 
     res.json({

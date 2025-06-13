@@ -103,6 +103,11 @@
   - Brief overview (2-3 sentences)
   - Identified patterns (3 key themes)
   - Follow-up suggestions
+- **Automatic learning** (ENABLE_AUTO_LEARNING=true):
+  - Automatically extracts and remembers information from conversations
+  - Intelligently merges new information with existing knowledge
+  - Shows users what was learned after each session
+  - Privacy-focused with sensitive data sanitization
 - **Personal detail extraction** from conversations
 - **Pattern recognition** across sessions
 - **Contextual greetings** based on time elapsed

@@ -30,7 +30,7 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW: z.string().default('900000'), // 15 minutes
   
   // Default AI settings
-  DEFAULT_AI_MODEL: z.string().default('gpt-4-turbo-preview'),
+  DEFAULT_AI_MODEL: z.string().default('gpt-4.5-preview'),
   MAX_TOKENS: z.string().default('16384'),
   AI_TEMPERATURE: z.string().default('0.7'),
   

@@ -38,8 +38,9 @@
 - **sqlite3**: ^5.1.7 - SQLite database (legacy support)
 
 ### AI Integration
-- **openai**: ^4.24.0 - OpenAI API client
-- **@anthropic-ai/sdk**: ^0.39.0 - Anthropic Claude API client
+- **openai**: ^4.24.0 - OpenAI API client (GPT-4.5)
+- **@anthropic-ai/sdk**: ^0.39.0 - Anthropic Claude API client (Claude 4)
+- **@google/generative-ai**: ^0.21.0 - Google Gemini API client (Gemini 2.5)
 - **node-fetch**: ^2.7.0 - Fetch API for Node.js
 
 ### Utilities

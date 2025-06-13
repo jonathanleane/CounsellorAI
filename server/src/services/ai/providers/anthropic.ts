@@ -98,7 +98,7 @@ export class AnthropicService {
 
       const modelString = this.mapModelToString(model);
 
-      const response = await this.client.messages.create({
+      const response = await this.ensureClient().messages.create({
         model: modelString,
         messages: formattedMessages,
         max_tokens: 1000,
@@ -139,7 +139,7 @@ export class AnthropicService {
 
       const modelString = this.mapModelToString(model);
 
-      const response = await this.client.messages.create({
+      const response = await this.ensureClient().messages.create({
         model: modelString,
         messages: formattedMessages,
         max_tokens: 2000,
@@ -231,16 +231,16 @@ export class AnthropicService {
 
   private mapModelToString(model: AIModel): string {
     switch (model) {
+      case AIModel.Claude4_Opus:
+        return 'claude-4-opus';
+      case AIModel.Claude4_Sonnet:
+        return 'claude-4-sonnet';
       case AIModel.Claude3_Opus:
         return 'claude-3-opus-20240229';
       case AIModel.Claude3_Sonnet:
         return 'claude-3-sonnet-20240229';
-      case AIModel.Claude4_Opus:
-        // Claude 4 doesn't exist yet, fallback to Claude 3 Opus
-        logger.warn('Claude 4 Opus not yet available, using Claude 3 Opus');
-        return 'claude-3-opus-20240229';
       default:
-        return 'claude-3-sonnet-20240229';
+        return 'claude-4-opus';
     }
   }
 }

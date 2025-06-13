@@ -5,6 +5,7 @@ import { aiRateLimiter } from '../middleware/rateLimiter';
 import { logger } from '../utils/logger';
 import { formatInTimeZone } from 'date-fns-tz';
 import { sanitizeUserInput, detectInjectionAttempt } from '../utils/security';
+import { mergePersonalDetails, sanitizePersonalDetails } from '../utils/personalDetailsMerger';
 
 const router = Router();
 
@@ -335,12 +336,55 @@ async function generateSessionSummary(
       conversation.model as AIModel
     );
     
-    // Update conversation with summary
+    // Check if automatic learning is enabled
+    const enableAutoLearning = process.env.ENABLE_AUTO_LEARNING === 'true';
+    let learnedDetails: any = null;
+    let learningChanges: string[] = [];
+    
+    if (enableAutoLearning && messages.length > 2) { // Only learn from substantive conversations
+      try {
+        logger.info(`Extracting personal details from session ${conversationId}`);
+        
+        // Extract new personal details from conversation
+        const newDetails = await aiService.extractPersonalDetails(
+          messages,
+          conversation.model as AIModel
+        );
+        
+        // Sanitize extracted details
+        const sanitizedNewDetails = sanitizePersonalDetails(newDetails);
+        
+        // Get current profile to merge with
+        const profile = await db.getProfile();
+        if (profile) {
+          const currentDetails = JSON.parse(profile.personal_details || '{}');
+          
+          // Merge new details with existing
+          const { merged, changes } = mergePersonalDetails(currentDetails, sanitizedNewDetails);
+          
+          if (changes.length > 0) {
+            // Update profile with merged details
+            await db.updateProfile('personal_details', merged);
+            logger.info(`Updated personal details with ${changes.length} changes from session ${conversationId}`);
+            
+            learnedDetails = sanitizedNewDetails;
+            learningChanges = changes;
+          }
+        }
+      } catch (error) {
+        logger.error(`Error extracting personal details from session ${conversationId}:`, error);
+        // Continue without failing the summary
+      }
+    }
+    
+    // Update conversation with summary and learning info
     await db.updateConversation(conversationId, {
       status: 'completed',
       ai_summary: summary.summary,
       identified_patterns: JSON.stringify(summary.patterns),
-      followup_suggestions: JSON.stringify(summary.followupSuggestions)
+      followup_suggestions: JSON.stringify(summary.followupSuggestions),
+      learned_details: learnedDetails ? JSON.stringify(learnedDetails) : null,
+      learning_changes: learningChanges.length > 0 ? JSON.stringify(learningChanges) : null
     });
     
     logger.info(`Session ${conversationId} summary generated successfully`);

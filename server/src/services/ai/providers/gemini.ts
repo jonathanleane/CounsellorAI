@@ -166,14 +166,18 @@ export class GeminiService {
 
   private mapModelToString(model: AIModel): string {
     switch (model) {
+      case AIModel.Gemini25_Pro:
+        return 'gemini-2.5-pro';
+      case AIModel.Gemini25_Flash:
+        return 'gemini-2.5-flash';
       case AIModel.Gemini_Pro:
         return 'gemini-1.5-flash';
       case AIModel.Gemini_Ultra:
-        // Gemini Ultra not yet available, fallback to Flash
-        logger.warn('Gemini Ultra not yet available, using Gemini 1.5 Flash');
-        return 'gemini-1.5-flash';
+        // Gemini Ultra deprecated, fallback to Gemini 2.5 Pro
+        logger.warn('Gemini Ultra is deprecated, using Gemini 2.5 Pro');
+        return 'gemini-2.5-pro';
       default:
-        return 'gemini-1.5-flash';
+        return 'gemini-2.5-pro';
     }
   }
 }

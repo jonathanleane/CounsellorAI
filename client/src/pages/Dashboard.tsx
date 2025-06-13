@@ -30,7 +30,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const profile = useProfileStore((state) => state.profile);
-  const [selectedModel, setSelectedModel] = useState('gpt-4-turbo-preview');
+  const [selectedModel, setSelectedModel] = useState('gpt-4.5-preview');
 
   // Fetch recent sessions
   const { data: recentSessions, isLoading: sessionsLoading } = useQuery({

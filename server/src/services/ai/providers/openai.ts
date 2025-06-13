@@ -141,16 +141,18 @@ export class OpenAIService {
 
   private mapModelToString(model: AIModel): string {
     switch (model) {
+      case AIModel.GPT45_Preview:
+        return 'gpt-4.5-preview';
       case AIModel.GPT4_Turbo:
         return 'gpt-4-turbo-preview';
       case AIModel.GPT4:
         return 'gpt-4';
       case AIModel.O3:
-        // O3 doesn't exist yet, fallback to GPT-4 Turbo
-        logger.warn('O3 model not yet available, using GPT-4 Turbo');
-        return 'gpt-4-turbo-preview';
+        // O3 doesn't exist yet, fallback to GPT-4.5 Preview
+        logger.warn('O3 model not yet available, using GPT-4.5 Preview');
+        return 'gpt-4.5-preview';
       default:
-        return 'gpt-4-turbo-preview';
+        return 'gpt-4.5-preview';
     }
   }
 }

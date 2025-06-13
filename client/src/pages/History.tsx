@@ -45,6 +45,8 @@ interface Session {
   ai_summary?: string;
   identified_patterns?: string[];
   followup_suggestions?: string[];
+  learned_details?: string;
+  learning_changes?: string;
 }
 
 export default function History() {
@@ -302,6 +304,31 @@ export default function History() {
                             </Box>
                           </Box>
                         )}
+                        
+                        {session.learning_changes && (() => {
+                          try {
+                            const changes = JSON.parse(session.learning_changes);
+                            if (changes.length > 0) {
+                              return (
+                                <Box sx={{ mb: 2 }}>
+                                  <Typography variant="subtitle2" gutterBottom color="success.main">
+                                    🧠 What I Learned
+                                  </Typography>
+                                  <Box sx={{ pl: 2 }}>
+                                    {changes.map((change: string, idx: number) => (
+                                      <Typography key={idx} variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                        • {change}
+                                      </Typography>
+                                    ))}
+                                  </Box>
+                                </Box>
+                              );
+                            }
+                          } catch (e) {
+                            return null;
+                          }
+                          return null;
+                        })()}
                         
                         <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                           <Button
