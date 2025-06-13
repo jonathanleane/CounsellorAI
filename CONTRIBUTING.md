@@ -81,7 +81,7 @@ npm run test:coverage
 ### Code Style
 - Use TypeScript for new code
 - Follow existing patterns
-- Add JSDoc comments for public APIs
+- Avoid comments in code (project preference - code should be self-documenting)
 - Keep functions small and focused
 
 ### Safety Considerations

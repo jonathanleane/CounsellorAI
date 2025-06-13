@@ -17,7 +17,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { profileApi } from '@/services/api';
 import { useProfileStore } from '@/stores/profileStore';
 
@@ -64,13 +64,17 @@ export default function Onboarding() {
     },
   });
 
+  const queryClient = useQueryClient();
+  
   const createProfileMutation = useMutation({
     mutationFn: profileApi.create,
     onSuccess: (response) => {
       console.log('Profile created successfully:', response.data);
       setProfile(response.data);
-      // Force a page reload to ensure the profile is properly loaded
-      window.location.href = '/';
+      // Invalidate the profile query to trigger a refetch
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // Navigate using React Router
+      navigate('/');
     },
     onError: (error: any) => {
       console.error('Profile creation failed:', error);

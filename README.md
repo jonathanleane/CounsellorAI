@@ -1,5 +1,7 @@
 # CounsellorAI
 
+> ⚠️ **CRITICAL SECURITY WARNING**: This application currently stores therapy data unencrypted. See [CRITICAL_SECURITY_UPDATE.md](./CRITICAL_SECURITY_UPDATE.md) for details. DO NOT use for sensitive data until encryption is implemented.
+
 An open-source AI therapy companion that provides personalized mental health support through conversational AI.
 
 ## Features
