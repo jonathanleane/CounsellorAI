@@ -47,11 +47,12 @@ router.post('/brain', async (req, res, next) => {
     const { category, field, value } = req.body;
     
     if (!category || !field) {
-      return res.status(400).json({ 
+      res.status(400).json({ 
         error: { 
           message: 'Category and field are required' 
         } 
       });
+      return;
     }
     
     // TODO: Implement brain data update

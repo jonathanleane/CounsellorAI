@@ -10,9 +10,10 @@ router.post('/ai', aiRateLimiter, async (req, res, next) => {
     const { message, model } = req.body;
     
     if (!message) {
-      return res.status(400).json({
+      res.status(400).json({
         error: { message: 'Message is required' }
       });
+      return;
     }
 
     // Get available models
@@ -22,9 +23,10 @@ router.post('/ai', aiRateLimiter, async (req, res, next) => {
     // Check if model is available
     const modelInfo = availableModels.find(m => m.model === selectedModel);
     if (!modelInfo?.available) {
-      return res.status(400).json({
+      res.status(400).json({
         error: { message: `Model ${selectedModel} is not available` }
       });
+      return;
     }
 
     // Test conversation
@@ -79,9 +81,10 @@ router.post('/ai/summary', aiRateLimiter, async (req, res, next) => {
     const { messages, model } = req.body;
     
     if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({
+      res.status(400).json({
         error: { message: 'Messages array is required' }
       });
+      return;
     }
 
     const selectedModel = model || AIModel.GPT4_Turbo;

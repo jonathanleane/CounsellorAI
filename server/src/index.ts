@@ -44,7 +44,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve test page in development
 if (process.env.NODE_ENV === 'development') {
-  app.get('/test-models.html', (req, res) => {
+  app.get('/test-models.html', (_req, res) => {
     res.sendFile(path.join(__dirname, '../../test-models.html'));
   });
 }

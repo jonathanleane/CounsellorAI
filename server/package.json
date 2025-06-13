@@ -4,11 +4,12 @@
   "description": "CounsellorAI backend server",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "nodemon --exec tsx src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "jest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dev:node": "nodemon --exec 'node --loader tsx' src/index.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
