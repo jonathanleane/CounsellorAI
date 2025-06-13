@@ -42,6 +42,13 @@ app.use(morgan('combined', { stream: { write: (message) => logger.info(message.t
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Serve test page in development
+if (process.env.NODE_ENV === 'development') {
+  app.get('/test-models.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../test-models.html'));
+  });
+}
+
 // Rate limiting
 app.use('/api/', rateLimiter);
 
