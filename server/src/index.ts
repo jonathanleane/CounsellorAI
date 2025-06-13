@@ -13,6 +13,7 @@ import { rateLimiter } from './middleware/rateLimiter';
 import { validateEnv } from './config/validateEnv';
 import { logger } from './utils/logger';
 import { initializeDatabase } from './services/database';
+import { aiService } from './services/ai';
 
 // Routes
 import sessionRoutes from './routes/sessions';
@@ -74,6 +75,23 @@ app.use(errorHandler);
 async function startServer() {
   try {
     await initializeDatabase();
+    
+    // Check available AI providers
+    const availableModels = aiService.getAvailableModels();
+    const availableProviders = new Set(
+      availableModels
+        .filter(model => model.available)
+        .map(model => model.provider)
+    );
+    
+    if (availableProviders.size === 0) {
+      logger.error('No AI providers available. Please configure at least one API key.');
+      logger.error('Set one of: OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_AI_API_KEY');
+      process.exit(1);
+    }
+    
+    logger.info(`Available AI providers: ${Array.from(availableProviders).join(', ')}`);
+    logger.info(`Available models: ${availableModels.filter(m => m.available).map(m => m.name).join(', ')}`);
     
     app.listen(PORT, () => {
       logger.info(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);

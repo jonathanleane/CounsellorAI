@@ -4,15 +4,23 @@ import { buildTherapySystemPrompt, buildSummaryPrompt, buildPersonalDetailsExtra
 import { logger } from '../../../utils/logger';
 
 export class GeminiService {
-  private client: GoogleGenerativeAI;
+  private client: GoogleGenerativeAI | null = null;
+  private apiKey: string | undefined;
 
   constructor() {
-    const apiKey = process.env.GOOGLE_AI_API_KEY;
-    if (!apiKey) {
-      throw new Error('Google AI API key not configured');
+    this.apiKey = process.env.GOOGLE_AI_API_KEY;
+    if (!this.apiKey) {
+      throw new Error('Google AI API key not configured. Please set GOOGLE_AI_API_KEY environment variable.');
     }
     
-    this.client = new GoogleGenerativeAI(apiKey);
+    this.client = new GoogleGenerativeAI(this.apiKey);
+  }
+
+  private ensureClient(): GoogleGenerativeAI {
+    if (!this.client) {
+      throw new Error('Gemini client not initialized. Missing API key.');
+    }
+    return this.client;
   }
 
   async generateResponse(
@@ -36,7 +44,7 @@ export class GeminiService {
 
       // Get the Gemini model
       const modelString = this.mapModelToString(model);
-      const geminiModel = this.client.getGenerativeModel({ model: modelString });
+      const geminiModel = this.ensureClient().getGenerativeModel({ model: modelString });
 
       // Format conversation history for Gemini
       const history = this.formatMessagesForGemini(messages);
@@ -87,7 +95,7 @@ export class GeminiService {
     try {
       const systemPrompt = buildSummaryPrompt();
       const modelString = this.mapModelToString(model);
-      const geminiModel = this.client.getGenerativeModel({ model: modelString });
+      const geminiModel = this.ensureClient().getGenerativeModel({ model: modelString });
 
       // Format all messages as context
       const conversationText = messages
@@ -124,7 +132,7 @@ export class GeminiService {
     try {
       const systemPrompt = buildPersonalDetailsExtractionPrompt();
       const modelString = this.mapModelToString(model);
-      const geminiModel = this.client.getGenerativeModel({ model: modelString });
+      const geminiModel = this.ensureClient().getGenerativeModel({ model: modelString });
 
       const conversationText = messages
         .map(msg => `${msg.role}: ${msg.content}`)

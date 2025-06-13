@@ -4,15 +4,23 @@ import { buildTherapySystemPrompt, buildSummaryPrompt, buildPersonalDetailsExtra
 import { logger } from '../../../utils/logger';
 
 export class AnthropicService {
-  private client: Anthropic;
+  private client: Anthropic | null = null;
+  private apiKey: string | undefined;
 
   constructor() {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error('Anthropic API key not configured');
+    this.apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!this.apiKey) {
+      throw new Error('Anthropic API key not configured. Please set ANTHROPIC_API_KEY environment variable.');
     }
     
-    this.client = new Anthropic({ apiKey });
+    this.client = new Anthropic({ apiKey: this.apiKey });
+  }
+
+  private ensureClient(): Anthropic {
+    if (!this.client) {
+      throw new Error('Anthropic client not initialized. Missing API key.');
+    }
+    return this.client;
   }
 
   async generateResponse(
@@ -50,7 +58,7 @@ export class AnthropicService {
         response = await this.streamWithThinking(modelString, formattedMessages);
       } else {
         // Regular response for Sonnet
-        response = await this.client.messages.create({
+        response = await this.ensureClient().messages.create({
           model: modelString,
           messages: formattedMessages,
           max_tokens: 4096,
@@ -154,7 +162,7 @@ export class AnthropicService {
 
   private async streamWithThinking(model: string, messages: any[]): Promise<Anthropic.Message> {
     // For Opus models with thinking mode
-    const stream = await this.client.beta.messages.stream({
+    const stream = await this.ensureClient().beta.messages.stream({
       model,
       messages,
       max_tokens: 32000,

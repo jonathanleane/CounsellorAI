@@ -4,15 +4,23 @@ import { buildTherapySystemPrompt, buildSummaryPrompt, buildPersonalDetailsExtra
 import { logger } from '../../../utils/logger';
 
 export class OpenAIService {
-  private client: OpenAI;
+  private client: OpenAI | null = null;
+  private apiKey: string | undefined;
 
   constructor() {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error('OpenAI API key not configured');
+    this.apiKey = process.env.OPENAI_API_KEY;
+    if (!this.apiKey) {
+      throw new Error('OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.');
     }
     
-    this.client = new OpenAI({ apiKey });
+    this.client = new OpenAI({ apiKey: this.apiKey });
+  }
+
+  private ensureClient(): OpenAI {
+    if (!this.client) {
+      throw new Error('OpenAI client not initialized. Missing API key.');
+    }
+    return this.client;
   }
 
   async generateResponse(
@@ -43,7 +51,7 @@ export class OpenAIService {
       // Map model enum to OpenAI model string
       const modelString = this.mapModelToString(model);
 
-      const completion = await this.client.chat.completions.create({
+      const completion = await this.ensureClient().chat.completions.create({
         model: modelString,
         messages: apiMessages,
         temperature: 0.7,
@@ -82,7 +90,7 @@ export class OpenAIService {
 
       const modelString = this.mapModelToString(model);
 
-      const completion = await this.client.chat.completions.create({
+      const completion = await this.ensureClient().chat.completions.create({
         model: modelString,
         messages: apiMessages,
         temperature: 0.7,
@@ -115,7 +123,7 @@ export class OpenAIService {
 
       const modelString = this.mapModelToString(model);
 
-      const completion = await this.client.chat.completions.create({
+      const completion = await this.ensureClient().chat.completions.create({
         model: modelString,
         messages: apiMessages,
         temperature: 0.3,

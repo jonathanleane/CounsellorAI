@@ -4,6 +4,7 @@ import { aiService, AIModel } from '../services/ai';
 import { aiRateLimiter } from '../middleware/rateLimiter';
 import { logger } from '../utils/logger';
 import { formatInTimeZone } from 'date-fns-tz';
+import { sanitizeUserInput, detectInjectionAttempt } from '../utils/security';
 
 const router = Router();
 
@@ -199,10 +200,16 @@ router.post('/:id/messages', aiRateLimiter, async (req, res, next) => {
       return;
     }
     
-    // Add user message
+    // Check for injection attempts
+    if (detectInjectionAttempt(content)) {
+      logger.warn(`Potential injection attempt in session ${id}`);
+    }
+    
+    // Sanitize and add user message
+    const sanitizedContent = sanitizeUserInput(content);
     await db.addMessage(id, {
       role: 'user',
-      content
+      content: sanitizedContent
     });
     
     // Get profile for context
@@ -213,7 +220,7 @@ router.post('/:id/messages', aiRateLimiter, async (req, res, next) => {
       role: msg.role,
       content: msg.content
     }));
-    messages.push({ role: 'user', content });
+    messages.push({ role: 'user', content: sanitizedContent });
     
     // Generate AI response
     try {
