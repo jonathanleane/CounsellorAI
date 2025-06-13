@@ -18,6 +18,7 @@ import { initializeDatabase } from './services/database';
 import sessionRoutes from './routes/sessions';
 import profileRoutes from './routes/profile';
 import healthRoutes from './routes/health';
+import testRoutes from './routes/test';
 
 // Validate environment variables
 validateEnv();
@@ -48,6 +49,7 @@ app.use('/api/', rateLimiter);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/health', healthRoutes);
+app.use('/api/test', testRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
