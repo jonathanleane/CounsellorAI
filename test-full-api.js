@@ -4,7 +4,7 @@ const colors = require('colors/safe');
 const API_BASE = 'http://localhost:3001/api';
 
 // Helper to print test results
-function printResult(test, success, details = '') {
+function printResult(test/*: string*/, success/*: boolean*/, details/*: string*/ = '') {
   if (success) {
     console.log(colors.green(`✓ ${test}`));
     if (details) console.log(colors.gray(`  ${details}`));

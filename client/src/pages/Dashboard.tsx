@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -30,7 +30,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const profile = useProfileStore((state) => state.profile);
-  const [selectedModel, setSelectedModel] = useState('gpt-4.5-preview');
+  const [selectedModel] = useState('gpt-4.5-preview');
 
   // Fetch recent sessions
   const { data: recentSessions, isLoading: sessionsLoading } = useQuery({
@@ -182,7 +182,7 @@ export default function Dashboard() {
         </Paper>
       ) : (
         <Grid container spacing={2}>
-          {recentSessions?.data?.map((session: any) => (
+          {recentSessions?.data?.map((session) => (
             <Grid item xs={12} key={session.id}>
               <Paper
                 sx={{

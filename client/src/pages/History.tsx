@@ -22,7 +22,6 @@ import {
 } from '@mui/material';
 import {
   Search as SearchIcon,
-  CalendarMonth as CalendarIcon,
   ViewList as ViewListIcon,
   ViewModule as ViewModuleIcon,
   ExpandMore as ExpandMoreIcon,
@@ -31,7 +30,7 @@ import {
   Download as DownloadIcon,
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { sessionsApi } from '@/services/api';
 
 interface Session {
@@ -41,7 +40,7 @@ interface Session {
   initial_mood?: number;
   timestamp: string;
   duration?: number;
-  messages: any[];
+  messages: Array<{ id: string; role: string; content: string; timestamp: string }>;
   ai_summary?: string;
   identified_patterns?: string[];
   followup_suggestions?: string[];
@@ -92,7 +91,7 @@ export default function History() {
   }) || [];
 
   // Group sessions by week
-  const groupedSessions = filteredSessions.reduce((groups: any, session: Session) => {
+  const groupedSessions = filteredSessions.reduce((groups: Record<string, { weekKey: string; start: Date; end: Date; sessions: Session[] }>, session: Session) => {
     const date = new Date(session.timestamp);
     const weekStart = startOfWeek(date);
     const weekKey = format(weekStart, 'yyyy-MM-dd');

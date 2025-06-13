@@ -11,7 +11,6 @@ import {
   Chip,
   IconButton,
   LinearProgress,
-  Divider,
   Alert,
   CircularProgress,
   Snackbar,
@@ -40,7 +39,6 @@ export default function Conversation() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const profile = useProfileStore((state) => state.profile);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState('');
   const [sessionDuration, setSessionDuration] = useState(0);
@@ -120,6 +118,7 @@ export default function Conversation() {
   // Create new session if we're on /conversation/new
   useEffect(() => {
     if (id === 'new' && !createSessionMutation.isPending && !createSessionMutation.isSuccess) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       createSessionMutation.mutate({
         session_type: 'standard',
         initial_mood: 7,

@@ -1,5 +1,5 @@
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
 import { Container, Box } from '@mui/material';
 
 import { useProfileStore } from '@/stores/profileStore';
