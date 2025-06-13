@@ -7,10 +7,14 @@ const router = Router();
 // Get user profile
 router.get('/', async (req, res, next) => {
   try {
+    logger.info('GET /api/profile - Fetching profile data');
     const db = getDatabase();
     const profile = await db.getProfile();
     
+    logger.info('Raw profile from database:', profile);
+    
     if (!profile) {
+      logger.warn('Profile not found in database');
       res.status(404).json({ 
         error: { 
           message: 'Profile not found. Please complete the onboarding questionnaire.' 
@@ -33,7 +37,26 @@ router.get('/', async (req, res, next) => {
       intake_completed: Boolean(profile.intake_completed)
     };
     
-    res.json(parsedProfile);
+    logger.info('Parsed profile being sent to client:', parsedProfile);
+    
+    // Add stats to the profile response
+    const conversations = await db.getAllConversations();
+    const stats = {
+      total_sessions: conversations.length,
+      avg_mood: conversations.length > 0 
+        ? Math.round(conversations.reduce((sum, c) => sum + (c.initial_mood || 0), 0) / conversations.length)
+        : 0,
+      total_duration: conversations.reduce((sum, c) => sum + (c.duration || 0), 0),
+      streak: 0 // TODO: Implement streak calculation
+    };
+    
+    const responseData = {
+      ...parsedProfile,
+      stats
+    };
+    
+    logger.info('Full response being sent to client:', responseData);
+    res.json(responseData);
   } catch (error) {
     logger.error('Error fetching profile:', error);
     next(error);
@@ -56,6 +79,50 @@ router.post('/', async (req, res, next) => {
     });
   } catch (error) {
     logger.error('Error saving profile:', error);
+    next(error);
+  }
+});
+
+// Update existing profile
+router.put('/', async (req, res, next) => {
+  try {
+    const db = getDatabase();
+    const profileData = req.body;
+    
+    logger.info('Updating profile for:', profileData.name);
+    
+    // Get existing profile
+    const existingProfile = await db.getProfile();
+    if (!existingProfile) {
+      res.status(404).json({ 
+        error: { 
+          message: 'Profile not found' 
+        } 
+      });
+      return;
+    }
+    
+    // Update each field individually to maintain data integrity
+    const fieldsToUpdate = [
+      'name', 'demographics', 'spirituality', 'therapy_goals', 
+      'preferences', 'health', 'mental_health_screening', 'sensitive_topics'
+    ];
+    
+    for (const field of fieldsToUpdate) {
+      if (profileData[field] !== undefined) {
+        await db.updateProfile(field, profileData[field]);
+      }
+    }
+    
+    // Get updated profile
+    const updatedProfile = await db.getProfile();
+    
+    res.json({
+      ...updatedProfile,
+      updated_at: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Error updating profile:', error);
     next(error);
   }
 });

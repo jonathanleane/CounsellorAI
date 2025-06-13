@@ -16,6 +16,10 @@ import {
   Stepper,
   TextField,
   Typography,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
+  Chip,
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { profileApi } from '@/services/api';
@@ -29,10 +33,51 @@ const steps = [
   'Review',
 ];
 
+// Common options for checkboxes
+const COMMON_GOALS = [
+  'Reduce anxiety',
+  'Manage depression',
+  'Improve relationships',
+  'Build self-esteem',
+  'Manage stress',
+  'Process grief/loss',
+  'Handle life transitions',
+  'Improve work-life balance',
+  'Develop coping skills',
+  'Heal from trauma',
+];
+
+const COMMON_HEALTH_CONDITIONS = [
+  'Chronic pain',
+  'Sleep issues',
+  'Digestive problems',
+  'Headaches/migraines',
+  'High blood pressure',
+  'Diabetes',
+  'Heart condition',
+  'Autoimmune condition',
+  'None of the above',
+];
+
+const COMMON_MENTAL_HEALTH = [
+  'Anxiety',
+  'Depression',
+  'ADHD',
+  'PTSD',
+  'Bipolar disorder',
+  'OCD',
+  'Eating disorder',
+  'Substance use',
+  'No previous diagnosis',
+];
+
 export default function Onboarding() {
   const navigate = useNavigate();
   const setProfile = useProfileStore((state) => state.setProfile);
   const [activeStep, setActiveStep] = useState(0);
+  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
+  const [selectedHealthConditions, setSelectedHealthConditions] = useState<string[]>([]);
+  const [selectedMentalHealth, setSelectedMentalHealth] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     demographics: {
@@ -84,9 +129,25 @@ export default function Onboarding() {
 
   const handleNext = () => {
     if (activeStep === steps.length - 1) {
-      // Submit the form
-      console.log('Submitting profile data:', formData);
-      createProfileMutation.mutate(formData);
+      // Combine checkbox selections with text fields
+      const finalFormData = {
+        ...formData,
+        therapy_goals: {
+          primary_goal: selectedGoals.length > 0 ? selectedGoals.join(', ') : formData.therapy_goals.primary_goal,
+          secondary_goals: formData.therapy_goals.secondary_goals,
+        },
+        health: {
+          physical_conditions: selectedHealthConditions.filter(c => c !== 'None of the above').join(', ') || formData.health.physical_conditions,
+          medications: formData.health.medications,
+        },
+        mental_health_screening: {
+          previous_diagnosis: selectedMentalHealth.filter(c => c !== 'No previous diagnosis').join(', ') || formData.mental_health_screening.previous_diagnosis,
+          current_medications: formData.mental_health_screening.current_medications,
+          therapy_history: formData.mental_health_screening.therapy_history,
+        },
+      };
+      console.log('Submitting profile data:', finalFormData);
+      createProfileMutation.mutate(finalFormData);
     } else {
       setActiveStep((prevStep) => prevStep + 1);
     }
@@ -151,16 +212,43 @@ export default function Onboarding() {
       case 1: // Goals & Preferences
         return (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Box>
+              <Typography variant="subtitle1" gutterBottom>
+                What would you like to work on? (Select all that apply)
+              </Typography>
+              <FormGroup>
+                {COMMON_GOALS.map((goal) => (
+                  <FormControlLabel
+                    key={goal}
+                    control={
+                      <Checkbox
+                        checked={selectedGoals.includes(goal)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedGoals([...selectedGoals, goal]);
+                          } else {
+                            setSelectedGoals(selectedGoals.filter(g => g !== goal));
+                          }
+                        }}
+                      />
+                    }
+                    label={goal}
+                  />
+                ))}
+              </FormGroup>
+              <TextField
+                label="Other goals not listed above"
+                value={formData.therapy_goals.primary_goal}
+                onChange={(e) => updateFormData('therapy_goals', 'primary_goal', e.target.value)}
+                placeholder="Tell us more about what you'd like to work on"
+                fullWidth
+                multiline
+                rows={2}
+                sx={{ mt: 2 }}
+              />
+            </Box>
             <TextField
-              label="What's your primary goal?"
-              value={formData.therapy_goals.primary_goal}
-              onChange={(e) => updateFormData('therapy_goals', 'primary_goal', e.target.value)}
-              placeholder="e.g., Reduce anxiety, Improve relationships"
-              required
-              fullWidth
-            />
-            <TextField
-              label="Any other goals? (optional)"
+              label="Any additional context? (optional)"
               value={formData.therapy_goals.secondary_goals}
               onChange={(e) => updateFormData('therapy_goals', 'secondary_goals', e.target.value)}
               multiline
@@ -186,15 +274,48 @@ export default function Onboarding() {
       case 2: // Health Information
         return (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <TextField
-              label="Any physical health conditions? (optional)"
-              value={formData.health.physical_conditions}
-              onChange={(e) => updateFormData('health', 'physical_conditions', e.target.value)}
-              placeholder="e.g., Chronic pain, diabetes, etc."
-              multiline
-              rows={3}
-              fullWidth
-            />
+            <Box>
+              <Typography variant="subtitle1" gutterBottom>
+                Do you have any of these health conditions? (Select all that apply)
+              </Typography>
+              <FormGroup>
+                {COMMON_HEALTH_CONDITIONS.map((condition) => (
+                  <FormControlLabel
+                    key={condition}
+                    control={
+                      <Checkbox
+                        checked={selectedHealthConditions.includes(condition)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            if (condition === 'None of the above') {
+                              setSelectedHealthConditions(['None of the above']);
+                            } else {
+                              setSelectedHealthConditions([
+                                ...selectedHealthConditions.filter(c => c !== 'None of the above'), 
+                                condition
+                              ]);
+                            }
+                          } else {
+                            setSelectedHealthConditions(selectedHealthConditions.filter(c => c !== condition));
+                          }
+                        }}
+                      />
+                    }
+                    label={condition}
+                  />
+                ))}
+              </FormGroup>
+              <TextField
+                label="Other health conditions not listed"
+                value={formData.health.physical_conditions}
+                onChange={(e) => updateFormData('health', 'physical_conditions', e.target.value)}
+                placeholder="Please describe any other health conditions"
+                multiline
+                rows={2}
+                fullWidth
+                sx={{ mt: 2 }}
+              />
+            </Box>
             <TextField
               label="Current medications? (optional)"
               value={formData.health.medications}
@@ -210,6 +331,38 @@ export default function Onboarding() {
       case 3: // Mental Health
         return (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Box>
+              <Typography variant="subtitle1" gutterBottom>
+                Have you experienced any of these? (Select all that apply)
+              </Typography>
+              <FormGroup>
+                {COMMON_MENTAL_HEALTH.map((condition) => (
+                  <FormControlLabel
+                    key={condition}
+                    control={
+                      <Checkbox
+                        checked={selectedMentalHealth.includes(condition)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            if (condition === 'No previous diagnosis') {
+                              setSelectedMentalHealth(['No previous diagnosis']);
+                            } else {
+                              setSelectedMentalHealth([
+                                ...selectedMentalHealth.filter(c => c !== 'No previous diagnosis'), 
+                                condition
+                              ]);
+                            }
+                          } else {
+                            setSelectedMentalHealth(selectedMentalHealth.filter(c => c !== condition));
+                          }
+                        }}
+                      />
+                    }
+                    label={condition}
+                  />
+                ))}
+              </FormGroup>
+            </Box>
             <FormControl fullWidth>
               <FormLabel>Have you been to therapy before?</FormLabel>
               <Select
@@ -222,10 +375,10 @@ export default function Onboarding() {
               </Select>
             </FormControl>
             <TextField
-              label="What challenges are you currently facing?"
+              label="What else would you like us to know? (optional)"
               value={formData.mental_health_screening.current_challenges}
               onChange={(e) => updateFormData('mental_health_screening', 'current_challenges', e.target.value)}
-              placeholder="e.g., Anxiety, depression, stress, relationships"
+              placeholder="Share any additional context about your mental health journey"
               multiline
               rows={3}
               fullWidth
@@ -250,18 +403,46 @@ export default function Onboarding() {
             </Typography>
             
             <Box sx={{ mt: 2 }}>
-              <Typography variant="subtitle2" gutterBottom>Name: {formData.name}</Typography>
               <Typography variant="subtitle2" gutterBottom>
-                Primary Goal: {formData.therapy_goals.primary_goal}
+                <strong>Name:</strong> {formData.name}
               </Typography>
+              
+              {selectedGoals.length > 0 && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom><strong>Goals:</strong></Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {selectedGoals.map((goal) => (
+                      <Chip key={goal} label={goal} size="small" />
+                    ))}
+                  </Box>
+                </Box>
+              )}
+              
+              {selectedHealthConditions.length > 0 && selectedHealthConditions[0] !== 'None of the above' && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom><strong>Health Conditions:</strong></Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {selectedHealthConditions.map((condition) => (
+                      <Chip key={condition} label={condition} size="small" color="secondary" />
+                    ))}
+                  </Box>
+                </Box>
+              )}
+              
+              {selectedMentalHealth.length > 0 && selectedMentalHealth[0] !== 'No previous diagnosis' && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom><strong>Mental Health:</strong></Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {selectedMentalHealth.map((condition) => (
+                      <Chip key={condition} label={condition} size="small" color="primary" />
+                    ))}
+                  </Box>
+                </Box>
+              )}
+              
               {formData.demographics.age && (
                 <Typography variant="subtitle2" gutterBottom>
-                  Age: {formData.demographics.age}
-                </Typography>
-              )}
-              {formData.mental_health_screening.current_challenges && (
-                <Typography variant="subtitle2" gutterBottom>
-                  Current Challenges: {formData.mental_health_screening.current_challenges}
+                  <strong>Age:</strong> {formData.demographics.age}
                 </Typography>
               )}
             </Box>
@@ -282,7 +463,8 @@ export default function Onboarding() {
       case 0:
         return formData.name.trim() !== '';
       case 1:
-        return formData.therapy_goals.primary_goal.trim() !== '';
+        // Valid if either checkboxes are selected OR text is entered
+        return selectedGoals.length > 0 || formData.therapy_goals.primary_goal.trim() !== '';
       default:
         return true;
     }

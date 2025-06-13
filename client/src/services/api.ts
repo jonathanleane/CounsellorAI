@@ -26,6 +26,7 @@ api.interceptors.response.use(
 export const profileApi = {
   get: () => api.get('/profile'),
   create: (data: any) => api.post('/profile', data),
+  update: (data: any) => api.put('/profile', data),
   getBrain: () => api.get('/profile/brain'),
   updateBrain: (category: string, field: string, value: any) =>
     api.post('/profile/brain', { category, field, value }),

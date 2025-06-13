@@ -59,17 +59,57 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState(0);
   const [editMode, setEditMode] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [availableModels, setAvailableModels] = useState<any[]>([]);
 
   // Fetch profile data
-  const { data: profile, isLoading } = useQuery({
+  const { data: profileResponse, isLoading, error } = useQuery({
     queryKey: ['profile'],
-    queryFn: () => profileApi.get(),
+    queryFn: async () => {
+      console.log('Fetching profile data...');
+      try {
+        const response = await profileApi.get();
+        console.log('Profile API response:', response);
+        console.log('Profile data:', response.data);
+        return response.data; // Extract the data from axios response
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        throw error;
+      }
+    },
   });
 
   // Fetch brain data
   const { data: brain } = useQuery({
     queryKey: ['profile', 'brain'],
-    queryFn: () => profileApi.getBrain(),
+    queryFn: async () => {
+      console.log('Fetching brain data...');
+      try {
+        const response = await profileApi.getBrain();
+        console.log('Brain API response:', response);
+        console.log('Brain data:', response.data);
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching brain:', error);
+        throw error;
+      }
+    },
+  });
+
+  // Fetch available models
+  const { data: modelsData } = useQuery({
+    queryKey: ['models'],
+    queryFn: async () => {
+      const response = await fetch('/api/health/models');
+      if (!response.ok) {
+        throw new Error('Failed to fetch models');
+      }
+      const data = await response.json();
+      if (data.models) {
+        const availableModelsList = data.models.filter((m: any) => m.available);
+        setAvailableModels(availableModelsList);
+      }
+      return data;
+    },
   });
 
   // Local form state
@@ -90,6 +130,7 @@ export default function Profile() {
     preferences: {
       communication_style: '',
       approach: '',
+      ai_model: '',
     },
     health: {
       physical_conditions: '',
@@ -106,10 +147,42 @@ export default function Profile() {
 
   // Initialize form data when profile loads
   useEffect(() => {
-    if (profile?.data) {
-      setFormData(profile.data);
+    console.log('useEffect - profileResponse:', profileResponse);
+    
+    if (profileResponse) {
+      // Parse JSON fields if they're strings
+      const profileData = profileResponse;
+      console.log('Setting form data with profileData:', profileData);
+      
+      // Also update the profile store
+      setProfile(profileData);
+      
+      setFormData({
+        name: profileData.name || '',
+        demographics: typeof profileData.demographics === 'string' 
+          ? JSON.parse(profileData.demographics) 
+          : profileData.demographics || { age: '', gender: '' },
+        spirituality: typeof profileData.spirituality === 'string'
+          ? JSON.parse(profileData.spirituality)
+          : profileData.spirituality || { beliefs: '', importance: '' },
+        therapy_goals: typeof profileData.therapy_goals === 'string'
+          ? JSON.parse(profileData.therapy_goals)
+          : profileData.therapy_goals || { primary_goal: '', secondary_goals: '' },
+        preferences: typeof profileData.preferences === 'string'
+          ? JSON.parse(profileData.preferences)
+          : profileData.preferences || { communication_style: '', approach: '', ai_model: '' },
+        health: typeof profileData.health === 'string'
+          ? JSON.parse(profileData.health)
+          : profileData.health || { physical_conditions: '', medications: '' },
+        mental_health_screening: typeof profileData.mental_health_screening === 'string'
+          ? JSON.parse(profileData.mental_health_screening)
+          : profileData.mental_health_screening || { previous_therapy: '', current_challenges: '' },
+        sensitive_topics: typeof profileData.sensitive_topics === 'string'
+          ? JSON.parse(profileData.sensitive_topics)
+          : profileData.sensitive_topics || { avoid_topics: '' },
+      });
     }
-  }, [profile?.data]);
+  }, [profileResponse]);
 
   // Update brain mutation
   const updateBrainMutation = useMutation({
@@ -134,10 +207,21 @@ export default function Profile() {
     }));
   };
 
+  // Update profile mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: any) => profileApi.update(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      setEditMode(false);
+      setSnackbar({ open: true, message: 'Profile updated successfully', severity: 'success' });
+    },
+    onError: () => {
+      setSnackbar({ open: true, message: 'Failed to update profile', severity: 'error' });
+    },
+  });
+
   const handleSaveProfile = () => {
-    // In a real app, this would update the profile via API
-    setEditMode(false);
-    setSnackbar({ open: true, message: 'Profile updated successfully', severity: 'success' });
+    updateProfileMutation.mutate(formData);
   };
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -151,6 +235,20 @@ export default function Profile() {
       </Container>
     );
   }
+
+  if (error) {
+    console.error('Profile loading error:', error);
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error">
+          Error loading profile: {error instanceof Error ? error.message : 'Unknown error'}
+        </Alert>
+      </Container>
+    );
+  }
+
+  console.log('Profile component render - profileResponse:', profileResponse);
+  console.log('Profile component render - formData:', formData);
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -292,16 +390,37 @@ export default function Profile() {
                 <Typography variant="h6" gutterBottom>
                   Therapist Brain Insights
                 </Typography>
-                {brain?.data?.insights ? (
+                {(() => {
+                  console.log('Brain data in render:', brain);
+                  console.log('Personal details:', brain?.personalDetails);
+                  return brain?.personalDetails && Object.keys(brain.personalDetails).length > 0;
+                })() ? (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {Object.entries(brain.data.insights).map(([key, value]: [string, any]) => (
-                      <Box key={key}>
-                        <Typography variant="subtitle2" color="primary">
-                          {key.replace(/_/g, ' ').charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ')}
+                    {Object.entries(brain.personalDetails).map(([category, fields]: [string, any]) => (
+                      <Box key={category}>
+                        <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>
+                          {category.replace(/_/g, ' ').split(' ').map(word => 
+                            word.charAt(0).toUpperCase() + word.slice(1)
+                          ).join(' ')}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
-                        </Typography>
+                        {typeof fields === 'object' && fields !== null ? (
+                          <Box sx={{ pl: 2 }}>
+                            {Object.entries(fields).map(([field, value]: [string, any]) => (
+                              <Box key={field} sx={{ mb: 0.5 }}>
+                                <Typography variant="body2" component="span" sx={{ fontWeight: 'medium' }}>
+                                  {field.replace(/_/g, ' ')}: 
+                                </Typography>
+                                <Typography variant="body2" component="span" color="text.secondary" sx={{ ml: 1 }}>
+                                  {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
+                                </Typography>
+                              </Box>
+                            ))}
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            {String(fields)}
+                          </Typography>
+                        )}
                       </Box>
                     ))}
                   </Box>
@@ -352,6 +471,20 @@ export default function Profile() {
                       <MenuItem value="integrative">Integrative</MenuItem>
                     </Select>
                   </FormControl>
+                  <FormControl fullWidth disabled={!editMode}>
+                    <FormLabel>AI Model Preference</FormLabel>
+                    <Select
+                      value={formData.preferences.ai_model || ''}
+                      onChange={(e) => updateFormData('preferences', 'ai_model', e.target.value)}
+                    >
+                      <MenuItem value="">Default (Auto-select)</MenuItem>
+                      {availableModels.map((model) => (
+                        <MenuItem key={model.model} value={model.model}>
+                          {model.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </Box>
               </CardContent>
             </Card>
@@ -387,7 +520,10 @@ export default function Profile() {
                   <Grid item xs={6} sm={3}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h4" color="primary">
-                        {profile?.data?.stats?.total_sessions || 0}
+                        {(() => {
+                          console.log('Stats - profileResponse?.stats:', profileResponse?.stats);
+                          return profileResponse?.stats?.total_sessions || 0;
+                        })()}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Total Sessions
@@ -397,7 +533,7 @@ export default function Profile() {
                   <Grid item xs={6} sm={3}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h4" color="primary">
-                        {profile?.data?.stats?.avg_mood || 'N/A'}
+                        {profileResponse?.stats?.avg_mood || 'N/A'}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Average Mood
@@ -407,8 +543,8 @@ export default function Profile() {
                   <Grid item xs={6} sm={3}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h4" color="primary">
-                        {profile?.data?.stats?.total_duration ? 
-                          `${Math.floor(profile.data.stats.total_duration / 60)}h` : '0h'}
+                        {profileResponse?.stats?.total_duration ? 
+                          `${Math.floor(profileResponse.stats.total_duration / 60)}h` : '0h'}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Total Time
@@ -418,7 +554,7 @@ export default function Profile() {
                   <Grid item xs={6} sm={3}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h4" color="primary">
-                        {profile?.data?.stats?.streak || 0}
+                        {profileResponse?.stats?.streak || 0}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Day Streak

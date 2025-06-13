@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -30,7 +29,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const profile = useProfileStore((state) => state.profile);
-  const [selectedModel] = useState('gpt-4.5-preview');
 
   // Fetch recent sessions
   const { data: recentSessions, isLoading: sessionsLoading } = useQuery({
@@ -55,10 +53,17 @@ export default function Dashboard() {
   });
 
   const startNewSession = () => {
+    let modelPreference;
+    if (profile?.preferences) {
+      const prefs = typeof profile.preferences === 'string' 
+        ? JSON.parse(profile.preferences) 
+        : profile.preferences;
+      modelPreference = prefs.ai_model;
+    }
+    
     createSessionMutation.mutate({
       session_type: 'standard',
-      initial_mood: 7,
-      model: selectedModel,
+      ...(modelPreference && { model: modelPreference }),
     });
   };
 
@@ -265,7 +270,13 @@ export default function Dashboard() {
                 Primary Goal
               </Typography>
               <Typography variant="body1">
-                {profile?.therapy_goals?.primary_goal || 'Not set'}
+                {(() => {
+                  if (!profile?.therapy_goals) return 'Not set';
+                  const goals = typeof profile.therapy_goals === 'string' 
+                    ? JSON.parse(profile.therapy_goals) 
+                    : profile.therapy_goals;
+                  return goals.primary_goal || 'Not set';
+                })()}
               </Typography>
             </Paper>
           </Grid>
@@ -275,7 +286,13 @@ export default function Dashboard() {
                 Preferred Style
               </Typography>
               <Typography variant="body1">
-                {profile?.preferences?.communication_style || 'Not set'}
+                {(() => {
+                  if (!profile?.preferences) return 'Not set';
+                  const prefs = typeof profile.preferences === 'string' 
+                    ? JSON.parse(profile.preferences) 
+                    : profile.preferences;
+                  return prefs.communication_style || 'Not set';
+                })()}
               </Typography>
             </Paper>
           </Grid>

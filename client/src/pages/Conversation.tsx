@@ -20,7 +20,6 @@ import {
   ArrowBack as ArrowBackIcon,
   Psychology as PsychologyIcon,
   Person as PersonIcon,
-  Timer as TimerIcon,
   Stop as StopIcon,
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -121,8 +120,7 @@ export default function Conversation() {
       // eslint-disable-next-line react-hooks/exhaustive-deps
       createSessionMutation.mutate({
         session_type: 'standard',
-        initial_mood: 7,
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-4.5-preview',
       });
     }
   }, [id]);
@@ -204,25 +202,17 @@ export default function Conversation() {
               <Chip size="small" label={session.data.model} />
             )}
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Chip
-              icon={<TimerIcon />}
-              label={formatDuration(sessionDuration)}
-              color="primary"
+          {isActive && (
+            <Button
               variant="outlined"
-            />
-            {isActive && (
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<StopIcon />}
-                onClick={handleEndSession}
-                disabled={endSessionMutation.isPending}
-              >
-                End Session
-              </Button>
-            )}
-          </Box>
+              color="error"
+              startIcon={<StopIcon />}
+              onClick={handleEndSession}
+              disabled={endSessionMutation.isPending}
+            >
+              End Session
+            </Button>
+          )}
         </Box>
       </Paper>
 
