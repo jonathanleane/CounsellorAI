@@ -10,8 +10,16 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "allowJs": true,
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["shared/*"]
+    }
   },
-  "include": ["scripts/**/*"],
-  "exclude": ["node_modules", "server", "client"]
+  "include": ["scripts/**/*", "*.js", "*.ts"],
+  "exclude": ["node_modules", "server/dist", "client/build", "client/dist"],
+  "references": [
+    { "path": "./server" },
+    { "path": "./client" }
+  ]
 }
