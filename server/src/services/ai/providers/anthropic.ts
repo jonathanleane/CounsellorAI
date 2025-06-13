@@ -170,7 +170,7 @@ export class AnthropicService {
     let usage = { input_tokens: 0, output_tokens: 0 };
 
     for await (const chunk of stream) {
-      if (chunk.type === 'content_block_delta' && chunk.delta.text) {
+      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
         fullContent += chunk.delta.text;
       } else if (chunk.type === 'message_start' && chunk.message.usage) {
         usage = chunk.message.usage;

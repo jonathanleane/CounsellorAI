@@ -159,13 +159,13 @@ export class GeminiService {
   private mapModelToString(model: AIModel): string {
     switch (model) {
       case AIModel.Gemini_Pro:
-        return 'gemini-pro';
+        return 'gemini-1.5-flash';
       case AIModel.Gemini_Ultra:
-        // Gemini Ultra not yet available, fallback to Pro
-        logger.warn('Gemini Ultra not yet available, using Gemini Pro');
-        return 'gemini-pro';
+        // Gemini Ultra not yet available, fallback to Flash
+        logger.warn('Gemini Ultra not yet available, using Gemini 1.5 Flash');
+        return 'gemini-1.5-flash';
       default:
-        return 'gemini-pro';
+        return 'gemini-1.5-flash';
     }
   }
 }
