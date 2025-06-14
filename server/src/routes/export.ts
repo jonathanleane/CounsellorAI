@@ -2,11 +2,15 @@ import { Router } from 'express';
 import { getDatabase } from '../services/database';
 import { logger } from '../utils/logger';
 import { csrfProtection } from '../middleware/csrf';
+import { authenticateToken } from '../middleware/auth';
 import path from 'path';
 import fs from 'fs';
 import archiver from 'archiver';
 
 const router = Router();
+
+// Apply authentication to all export routes
+router.use(authenticateToken);
 
 // Export all user data as JSON
 router.get('/export/json', async (req, res) => {

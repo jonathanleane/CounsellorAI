@@ -9,17 +9,14 @@ This document describes the AI integration as currently implemented in Counsello
 ## Supported AI Models
 
 ### 1. OpenAI
-- **GPT-4** (`gpt-4`)
-- **GPT-4 Turbo** (`gpt-4-turbo-preview`)
-- **GPT-3.5 Turbo** (`gpt-3.5-turbo`)
+- **GPT-4o** (`gpt-4o`) - Latest and most capable model
+- **GPT-4o mini** (`gpt-4o-mini`) - Faster, cost-effective variant
 
 ### 2. Anthropic
-- **Claude 3 Opus** (`claude-3-opus-20240229`)
-- **Claude 3 Sonnet** (`claude-3-sonnet-20240229`)
-- **Claude 3 Haiku** (`claude-3-haiku-20240307`)
+- **Claude 3.5 Sonnet** (`claude-3-5-sonnet-20241022`) - Most capable Claude model
 
 ### 3. Google
-- **Gemini Pro** (`gemini-pro`)
+- **Gemini 2.0 Flash Experimental** (`gemini-2.0-flash-exp`) - Fastest Gemini model
 
 ## AI Service Architecture
 
@@ -97,7 +94,7 @@ The system organizes information into 8 categories:
 ### OpenAI
 ```typescript
 {
-  model: "gpt-4", // or other available models
+  model: "gpt-4o", // or other available models
   messages: formattedMessages,
   temperature: 0.7,
   max_tokens: 4096
@@ -107,7 +104,7 @@ The system organizes information into 8 categories:
 ### Anthropic
 ```typescript
 {
-  model: "claude-3-opus-20240229",
+  model: "claude-3-5-sonnet-20241022",
   messages: formattedMessages,
   max_tokens: 4096,
   temperature: 0.7
@@ -153,7 +150,7 @@ ANTHROPIC_API_KEY=your_key
 GOOGLE_AI_API_KEY=your_key
 
 # Optional configuration
-DEFAULT_AI_MODEL=gpt-4
+DEFAULT_AI_MODEL=gpt-4o
 MAX_TOKENS=16384
 AI_TEMPERATURE=0.7
 ```

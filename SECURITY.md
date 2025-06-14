@@ -1,107 +1,97 @@
 # Security Policy
 
-## ⚠️ CRITICAL SECURITY WARNING
+## 🛡️ Security Overview
 
-**This application is currently in DEVELOPMENT ONLY status with the following vulnerabilities:**
-- ❌ **NO AUTHENTICATION SYSTEM** - No login or access control
-- ❌ **NO SESSION MANAGEMENT** - Sessions never expire
-- ❌ **NO AUDIT LOGGING** - No tracking of data access
+CounsellorAI is an open source hobby project that implements security best practices for personal use. While we take security seriously, please understand this is not a commercial product.
 
-**Recently Fixed (2025-06-14):**
-- ✅ **DATABASE ENCRYPTION** - SQLCipher with AES-256 encryption
-- ✅ **DATA EXPORT/DELETION** - Full GDPR compliance
-- ✅ **INPUT VALIDATION** - All endpoints protected with Zod schemas
-- ✅ **CSRF PROTECTION** - Double-submit cookie pattern implemented
-- ✅ **SQL INJECTION** - Field whitelisting prevents injection attacks
-- ✅ **SENSITIVE DATA REDACTION** - PII removed from logs automatically
-- ✅ **REQUEST SIZE LIMITS** - 1MB limit prevents DoS attacks
+### Implemented Security Features
 
-**DO NOT USE FOR REAL THERAPY DATA UNTIL REMAINING CRITICAL ISSUES ARE RESOLVED**
+- ✅ **Authentication**: JWT-based authentication with bcrypt password hashing
+- ✅ **Database Encryption**: SQLCipher with AES-256 encryption
+- ✅ **Input Validation**: All endpoints protected with Zod schemas
+- ✅ **CSRF Protection**: Double-submit cookie pattern implemented
+- ✅ **SQL Injection Protection**: Field whitelisting and parameterized queries
+- ✅ **XSS Protection**: Input sanitization on all user inputs
+- ✅ **Sensitive Data Redaction**: PII automatically removed from logs
+- ✅ **Request Size Limits**: 1MB limit prevents DoS attacks
+- ✅ **GDPR Compliance**: Full data export and deletion capabilities
+- ✅ **Backup System**: Automatic encrypted backups
+- ✅ **API Versioning**: Future-proof API design
 
 ## Reporting Security Vulnerabilities
 
-We take security seriously in CounsellorAI, especially given the sensitive nature of mental health data.
+We appreciate responsible disclosure of security issues. As an open source project:
 
-**Please do not report security vulnerabilities through public GitHub issues.**
-
-Instead, please report them via:
-- Create a private security advisory on GitHub
-- Or open an issue describing the general area of concern without specifics
-
-## What to Include
-
-Please include:
-- Description of the vulnerability
-- Steps to reproduce
-- Potential impact
-- Suggested fix (if any)
-
-## Response Timeline
-
-- **Acknowledgment**: Within 48 hours
-- **Initial Assessment**: Within 1 week
-- **Fix Timeline**: Depends on severity
-  - Critical: 24-48 hours
-  - High: 1 week
-  - Medium: 2-4 weeks
-  - Low: Next release
+1. **Create an Issue**: Open a GitHub issue describing the vulnerability
+2. **Submit a PR**: Even better, submit a pull request with a fix!
+3. **Be Patient**: This is a hobby project maintained in spare time
 
 ## Security Considerations
 
 ### Data Protection
-- ❌ **NOT IMPLEMENTED**: Database encryption at rest (SQLite stores all data in plaintext)
+- ✅ Database encryption at rest (when DATABASE_ENCRYPTION_KEY is set)
 - ✅ API keys protected in environment variables
-- ✅ **IMPLEMENTED**: Sensitive data redaction in logs using redactSensitiveData utility
-- ❌ **NOT IMPLEMENTED**: Session management with proper timeouts
+- ✅ Sensitive data redaction in logs
+- ✅ Secure password storage with bcrypt
 
 ### API Security
-- ✅ Request size limits (1MB) to prevent DoS attacks
-- ✅ Input validation with Zod on ALL endpoints
-- ✅ SQL injection prevention via field whitelisting
-- ✅ CSRF protection with double-submit cookie pattern
-- ✅ XSS protection via input sanitization
+- ✅ Request size limits to prevent DoS
+- ✅ Input validation on all endpoints
+- ✅ SQL injection prevention
+- ✅ CSRF protection
+- ✅ XSS protection
 
 ### Authentication
-- ❌ **NOT IMPLEMENTED**: No authentication system
-- ❌ **NOT IMPLEMENTED**: No password requirements
-- ❌ **NOT IMPLEMENTED**: No 2FA support
-- ❌ **NOT IMPLEMENTED**: No secure session management
+- ✅ JWT-based authentication
+- ✅ Configurable token expiry
+- ✅ Secure password hashing
+- ⚠️ No password reset (email integration not implemented)
+- ⚠️ No 2FA support
 
-## Supported Versions
+## Best Practices for Users
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.x.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+1. **Strong Passwords**: Use a unique, strong password
+2. **Secure Keys**: Keep your JWT_SECRET and DATABASE_ENCRYPTION_KEY secure
+3. **Regular Backups**: Enable automatic backups
+4. **Private Hosting**: Run on your own secure computer
+5. **API Key Security**: Don't share your AI API keys
 
-## Current Security Status
+## Limitations
 
-### ✅ Implemented:
-- Environment-based configuration
-- Request size limits (1MB) on all endpoints
-- Input validation with Zod schemas on ALL endpoints
-- CSRF protection using csrf-csrf package
-- SQL injection protection via field whitelisting
-- Sensitive data redaction in logs (redactSensitiveData utility)
-- Comprehensive error handling middleware
-- CORS configuration with proper origins
-- JSON body parsing with strict size limits
-- Input sanitization for XSS prevention
-- Lazy loading of AI providers (security & performance)
+As a hobby project, some enterprise features are not implemented:
 
-### ❌ NOT Implemented (CRITICAL):
-- Database encryption (all data in plaintext SQLite)
-- Authentication system (no access control)
-- Session timeouts and management
-- Security headers (Helmet.js)
-- HTTPS enforcement (development only)
-- Secure session management
-- Password hashing (no user accounts)
-- API key rotation mechanism
-- Audit logging for compliance
-- Data export for GDPR compliance
-- Backup encryption
+- No email-based password reset
+- No two-factor authentication
+- No audit logging
+- No session timeout (beyond JWT expiry)
+- Single-user focused (limited multi-user support)
 
-## Acknowledgments
+## Environment Variables
 
-We appreciate responsible disclosure and will acknowledge security researchers who help improve CounsellorAI.
+Ensure these are set securely:
+
+```env
+# Required for security
+JWT_SECRET=<strong-random-string>
+DATABASE_ENCRYPTION_KEY=<strong-random-string>
+
+# Generate secure values with:
+# openssl rand -base64 32
+```
+
+## Disclaimer
+
+This is an open source hobby project provided "as is" without warranty. While security best practices have been implemented, users should evaluate their own security needs and use the application accordingly.
+
+For highly sensitive data or clinical use, please consult with security professionals and use appropriate commercial solutions.
+
+## Contributing
+
+Security improvements are always welcome! Please feel free to:
+
+- Report issues
+- Submit pull requests
+- Suggest improvements
+- Share security best practices
+
+Together we can make this project more secure for everyone! 🔒

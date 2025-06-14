@@ -16,13 +16,16 @@ import { validateEnv } from './config/validateEnv';
 import { logger } from './utils/logger';
 import { initializeDatabase } from './services/database';
 import { aiService } from './services/ai';
+import { backupService } from './services/backup';
 
 // Routes
+import authRoutes from './routes/auth';
 import sessionRoutes from './routes/sessions';
 import profileRoutes from './routes/profile';
 import healthRoutes from './routes/health';
 import testRoutes from './routes/test';
 import exportRoutes from './routes/export';
+import backupRoutes from './routes/backup';
 import v1Routes from './routes/v1';
 
 // Validate environment variables
@@ -71,6 +74,9 @@ app.use('/api/', rateLimiter);
 // CSRF token endpoint (must be before CSRF protection)
 app.get('/api/csrf-token', getCsrfToken);
 
+// Auth routes (no CSRF for login/register)
+app.use('/api/auth', authRoutes);
+
 // Apply CSRF protection to all state-changing routes
 app.use('/api/', csrfProtection);
 
@@ -84,6 +90,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/test', testRoutes);
 app.use('/api', exportRoutes);  // Export routes at /api/export/*
+app.use('/api/backup', backupRoutes);
 
 // API version redirect for root
 app.get('/api', (req, res) => {
@@ -122,6 +129,9 @@ async function startServer() {
   try {
     await initializeDatabase();
     
+    // Start backup service
+    backupService.start();
+    
     // Check available AI providers
     const availableModels = aiService.getAvailableModels();
     const availableProviders = new Set(
@@ -153,6 +163,7 @@ startServer();
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, shutting down gracefully');
+  backupService.stop();
   process.exit(0);
 });
 

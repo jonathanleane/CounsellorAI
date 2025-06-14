@@ -27,6 +27,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.9",
     "@types/node": "^20.11.0",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
@@ -63,8 +64,16 @@
   },
   "homepage": "https://github.com/yourusername/counsellor-ai#readme",
   "dependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cron": "^2.0.1",
+    "@types/express-session": "^1.18.2",
+    "@types/jsonwebtoken": "^9.0.9",
+    "bcryptjs": "^3.0.2",
     "colors": "^1.4.0",
     "cookie-parser": "^1.4.7",
-    "csrf-csrf": "^4.0.3"
+    "cron": "^4.3.1",
+    "csrf-csrf": "^4.0.3",
+    "express-session": "^1.18.1",
+    "jsonwebtoken": "^9.0.2"
   }
 }

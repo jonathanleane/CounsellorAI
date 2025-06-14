@@ -3,8 +3,12 @@ import { getDatabase } from '../services/database';
 import { logger } from '../utils/logger';
 import { redactSensitiveData, createSafeLogObject } from '../utils/redaction';
 import { validateBody, createProfileSchema, updateProfileSchema, updateBrainSchema } from '../validation/schemas';
+import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
+
+// Apply authentication to all profile routes
+router.use(authenticateToken);
 
 // Get user profile
 router.get('/', async (req, res, next) => {

@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "dev:node": "nodemon --exec 'node --loader tsx' src/index.ts",
     "migrate:encrypt": "tsx src/utils/migrateToEncryptedDb.ts",
-    "test:encryption": "tsx src/tests/testEncryption.ts"
+    "test:encryption": "tsx src/tests/testEncryption.ts",
+    "backup:create": "tsx src/scripts/backup.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -19,8 +20,11 @@
     "@journeyapps/sqlcipher": "^5.3.1",
     "@types/archiver": "^6.0.3",
     "archiver": "^7.0.1",
+    "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "cron": "^3.3.0",
     "date-fns": "^3.3.1",
     "date-fns-tz": "^3.2.0",
     "dotenv": "^16.4.1",
@@ -29,6 +33,7 @@
     "firebase-admin": "^13.2.0",
     "helmet": "^7.1.0",
     "joi": "^17.12.0",
+    "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "openai": "^4.24.0",
     "sqlite3": "^5.1.7",
@@ -37,8 +42,12 @@
   },
   "devDependencies": {
     "@jest/types": "^29.6.3",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.9",
     "@types/cors": "^2.8.17",
+    "@types/cron": "^2.4.0",
     "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.8",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.11.0",
     "jest": "^29.7.0",

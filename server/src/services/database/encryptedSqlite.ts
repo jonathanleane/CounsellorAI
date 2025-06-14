@@ -78,6 +78,13 @@ export class EncryptedSQLiteDatabase implements DatabaseInterface {
 
   private async createTables(): Promise<void> {
     const queries = [
+      `CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at TEXT DEFAULT (datetime('now')),
+        last_login TEXT
+      )`,
       `CREATE TABLE IF NOT EXISTS profiles (
         id TEXT PRIMARY KEY DEFAULT 'default',
         name TEXT NOT NULL,
@@ -420,6 +427,103 @@ export class EncryptedSQLiteDatabase implements DatabaseInterface {
           }
         }
       );
+    });
+  }
+
+  // User methods
+  async getUserById(id: number): Promise<any> {
+    this.ensureInitialized();
+    return new Promise((resolve, reject) => {
+      this.db!.get('SELECT * FROM users WHERE id = ?', [id], (err, row) => {
+        if (err) {
+          logger.error('Error getting user by ID:', err);
+          reject(err);
+        } else {
+          resolve(row);
+        }
+      });
+    });
+  }
+
+  async getUserByUsername(username: string): Promise<any> {
+    this.ensureInitialized();
+    return new Promise((resolve, reject) => {
+      this.db!.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
+        if (err) {
+          logger.error('Error getting user by username:', err);
+          reject(err);
+        } else {
+          resolve(row);
+        }
+      });
+    });
+  }
+
+  async createUser(username: string, passwordHash: string): Promise<number> {
+    this.ensureInitialized();
+    return new Promise((resolve, reject) => {
+      this.db!.run(
+        'INSERT INTO users (username, password_hash) VALUES (?, ?)',
+        [username, passwordHash],
+        function(err) {
+          if (err) {
+            logger.error('Error creating user:', err);
+            reject(err);
+          } else {
+            resolve(this.lastID);
+          }
+        }
+      );
+    });
+  }
+
+  async updatePassword(userId: number, passwordHash: string): Promise<void> {
+    this.ensureInitialized();
+    return new Promise((resolve, reject) => {
+      this.db!.run(
+        'UPDATE users SET password_hash = ? WHERE id = ?',
+        [passwordHash, userId],
+        (err) => {
+          if (err) {
+            logger.error('Error updating password:', err);
+            reject(err);
+          } else {
+            resolve();
+          }
+        }
+      );
+    });
+  }
+
+  async updateLastLogin(userId: number): Promise<void> {
+    this.ensureInitialized();
+    return new Promise((resolve, reject) => {
+      this.db!.run(
+        'UPDATE users SET last_login = datetime("now") WHERE id = ?',
+        [userId],
+        (err) => {
+          if (err) {
+            logger.error('Error updating last login:', err);
+            reject(err);
+          } else {
+            resolve();
+          }
+        }
+      );
+    });
+  }
+
+  async deleteUser(userId: number): Promise<void> {
+    this.ensureInitialized();
+    return new Promise((resolve, reject) => {
+      this.db!.run('DELETE FROM users WHERE id = ?', [userId], (err) => {
+        if (err) {
+          logger.error('Error deleting user:', err);
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
     });
   }
 

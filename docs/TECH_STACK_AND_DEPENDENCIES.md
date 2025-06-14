@@ -16,7 +16,7 @@
 ### Backend (Server)
 - **Runtime**: Node.js 18+
 - **Framework**: Express.js with TypeScript
-- **Database**: SQLite3 (local storage, NO ENCRYPTION)
+- **Database**: SQLite3 with SQLCipher encryption (AES-256 when DATABASE_ENCRYPTION_KEY is set)
 - **AI Integration**:
   - OpenAI SDK (GPT-4, GPT-3.5)
   - Anthropic SDK (Claude)

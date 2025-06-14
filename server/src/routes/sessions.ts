@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getDatabase } from '../services/database';
 import { aiService, AIModel } from '../services/ai';
 import { aiRateLimiter } from '../middleware/rateLimiter';
+import { authenticateToken } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { formatInTimeZone } from 'date-fns-tz';
 import { sanitizeUserInput, detectInjectionAttempt } from '../utils/security';
@@ -16,6 +17,9 @@ import {
 } from '../validation/schemas';
 
 const router = Router();
+
+// Apply authentication to all session routes
+router.use(authenticateToken);
 
 // Get all sessions
 router.get('/', async (req, res, next) => {
