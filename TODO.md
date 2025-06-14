@@ -1,14 +1,15 @@
 # CounsellorAI - Security & Bug Fix TODO List
 
-Last Updated: 2025-06-13
+Last Updated: 2025-06-14
 
 ## 🔴 CRITICAL Security Issues (Fix Immediately)
 
 ### 1. ⚠️ Add Development Warning to README.md
-- [ ] Add prominent warning: "⚠️ DEVELOPMENT ONLY - DO NOT USE FOR REAL THERAPY DATA"
-- [ ] Explain security limitations
+- [✓] Add prominent warning: "⚠️ DEVELOPMENT ONLY - DO NOT USE FOR REAL THERAPY DATA"
+- [✓] Explain security limitations
 - **Priority**: HIGH
 - **Files**: README.md
+- **Status**: ✅ COMPLETED (2025-06-13)
 
 ### 2. 🔐 Implement Database Encryption
 - [ ] Encrypt all therapy sessions and personal data
@@ -27,76 +28,92 @@ Last Updated: 2025-06-13
 - **Files**: New auth routes, middleware, frontend components
 
 ### 4. 💉 Fix SQL Injection Vulnerability
-- [ ] Sanitize field names in updateProfile
-- [ ] Use parameterized queries only
+- [✓] Sanitize field names in updateProfile
+- [✓] Use field whitelisting for safety
 - **Priority**: CRITICAL
 - **Files**: server/src/services/database/sqlite.ts:207
-```typescript
-// DANGEROUS - Current code:
-`UPDATE profiles SET ${field} = ?, updated_at = datetime('now') WHERE id = ?`
-```
+- **Status**: ✅ COMPLETED (2025-06-13)
+- **Solution**: Implemented field whitelisting with allowedFields array
 
 ### 5. 🚫 Remove Sensitive Data from Logs
-- [ ] Use redactSensitiveData utility
-- [ ] Remove full profile logging
-- [ ] Implement log levels
+- [✓] Use redactSensitiveData utility
+- [✓] Remove full profile logging
+- [✓] Implement log levels
 - **Priority**: HIGH
 - **Files**: server/src/routes/profile.ts:14,40,58
+- **Status**: ✅ COMPLETED (2025-06-13)
+- **Solution**: Created redactSensitiveData utility and applied throughout
 
 ### 6. ✅ Add Input Validation
-- [ ] Implement Zod schemas for all endpoints
-- [ ] Validate profile data structure
-- [ ] Validate session creation
-- [ ] Add request sanitization
+- [✓] Implement Zod schemas for all endpoints
+- [✓] Validate profile data structure
+- [✓] Validate session creation
+- [✓] Add request sanitization
 - **Priority**: HIGH
 - **Files**: server/src/routes/profile.ts, server/src/routes/sessions.ts
+- **Status**: ✅ COMPLETED (2025-06-13)
+- **Solution**: Added comprehensive Zod validation to all POST endpoints
 
 ### 7. 🛡️ Add CSRF Protection
-- [ ] Implement CSRF tokens
-- [ ] Add middleware protection
+- [✓] Implement CSRF tokens
+- [✓] Add middleware protection
 - **Priority**: HIGH
 - **Files**: Server middleware configuration
+- **Status**: ✅ COMPLETED (2025-06-13)
+- **Solution**: Implemented double-submit cookie pattern with csrf-csrf package
 
 ## 🟠 HIGH Priority Bugs
 
 ### 8. 🤖 Fix Hardcoded AI Model
-- [ ] Remove hardcoded 'gpt-4.5-preview'
-- [ ] Use user preference from profile
+- [✓] Remove hardcoded 'gpt-4.5-preview'
+- [✓] Use user preference from profile
 - **Priority**: MEDIUM
 - **Files**: client/src/pages/Conversation.tsx:123
+- **Status**: ✅ COMPLETED (2025-06-13)
+- **Solution**: Now uses profile.preferences?.ai_model || DEFAULT_AI_MODEL
 
 ### 9. 🔧 Fix Environment Variable Mismatch
-- [ ] Rename GOOGLE_API_KEY to GOOGLE_AI_API_KEY
-- [ ] Update validateEnv.ts
-- [ ] Update .env.example
+- [✓] Keep GOOGLE_AI_API_KEY (it was correct)
+- [✓] Verify validateEnv.ts is correct
+- [✓] Update .env.example
 - **Priority**: MEDIUM
 - **Files**: server/src/config/validateEnv.ts
+- **Status**: ✅ COMPLETED (2025-06-13)
+- **Note**: The variable was already correct as GOOGLE_AI_API_KEY
 
 ### 10. 💾 Fix Memory Leak in Conversation Timer
-- [ ] Properly cleanup timer on unmount
-- [ ] Handle navigation during active session
+- [✓] Properly cleanup timer on unmount
+- [✓] Handle navigation during active session
 - **Priority**: MEDIUM
 - **Files**: client/src/pages/Conversation.tsx:49-56
+- **Status**: ✅ COMPLETED (2025-06-13)
+- **Solution**: Added cleanup in useEffect return function
 
 ### 11. 🏃 Fix Race Condition in Profile Loading
-- [ ] Ensure profile loads before render
-- [ ] Add proper loading states
-- [ ] Fix "Not set" appearing incorrectly
+- [✓] Ensure profile loads before render
+- [✓] Add proper loading states
+- [✓] Fix "Not set" appearing incorrectly
 - **Priority**: MEDIUM
 - **Files**: client/src/pages/Dashboard.tsx, Profile.tsx
+- **Status**: ✅ COMPLETED (2025-06-13)
+- **Solution**: Added loading checks and fixed double data wrapping
 
 ### 12. 📊 Fix intake_completed Type Issue
-- [ ] Use 1 instead of true for SQLite
-- [ ] Update type definitions
+- [✓] Use 1 instead of true for SQLite
+- [✓] Update type definitions
 - **Priority**: MEDIUM
 - **Files**: server/src/routes/sessions.ts:392
+- **Status**: ✅ COMPLETED (2025-06-13)
+- **Solution**: Changed to use 1 for SQLite boolean storage
 
 ### 13. 📄 Update Security Documentation
-- [ ] Remove false encryption claims
-- [ ] Add accurate security status
-- [ ] Document current limitations
+- [✓] Remove false encryption claims
+- [✓] Add accurate security status
+- [✓] Document current limitations
 - **Priority**: MEDIUM
 - **Files**: SECURITY.md
+- **Status**: ✅ COMPLETED (2025-06-14)
+- **Solution**: Updated all .md files with accurate security status
 
 ### 14. 💾 Implement Backup Functionality
 - [ ] Implement AUTO_BACKUP feature
@@ -115,17 +132,21 @@ Last Updated: 2025-06-13
 ## 🟡 MEDIUM Priority Features
 
 ### 16. 📈 Implement Streak Calculation
-- [ ] Calculate consecutive day usage
-- [ ] Store last session date
-- [ ] Display accurate streak
+- [✓] Calculate consecutive day usage
+- [✓] Store last session date
+- [✓] Display accurate streak
 - **Priority**: LOW
 - **Files**: server/src/routes/profile.ts:51
+- **Status**: ✅ COMPLETED (2025-06-13)
+- **Solution**: Added calculateStreak function using session timestamps
 
 ### 17. 🔒 Add Request Size Limits
-- [ ] Configure body-parser limits
-- [ ] Prevent DoS attacks
+- [✓] Configure body-parser limits
+- [✓] Prevent DoS attacks
 - **Priority**: MEDIUM
 - **Files**: Server middleware
+- **Status**: ✅ COMPLETED (2025-06-13)
+- **Solution**: Set 1MB limit on express.json() middleware
 
 ### 18. 🏷️ Add API Versioning
 - [ ] Prefix routes with /api/v1/
@@ -174,9 +195,33 @@ logger.info('Profile updated for user:', redactSensitiveData({ name: profile.nam
 ## 🚀 Progress Tracking
 
 - Total Issues: 20
-- Completed: 0
+- Completed: 13 ✅
 - In Progress: 0
-- Remaining: 20
+- Remaining: 7
+
+### Completed Items:
+1. ✅ Add Development Warning to README.md
+4. ✅ Fix SQL Injection Vulnerability
+5. ✅ Remove Sensitive Data from Logs
+6. ✅ Add Input Validation (Zod schemas)
+7. ✅ Add CSRF Protection
+8. ✅ Fix Hardcoded AI Model
+9. ✅ Fix Environment Variable (was already correct)
+10. ✅ Fix Memory Leak in Conversation Timer
+11. ✅ Fix Race Condition in Profile Loading
+12. ✅ Fix intake_completed Type Issue
+13. ✅ Update Security Documentation
+16. ✅ Implement Streak Calculation
+17. ✅ Add Request Size Limits
+
+### Remaining Critical Items:
+2. ❌ Implement Database Encryption
+3. ❌ Add Authentication System
+14. ❌ Implement Backup Functionality
+15. ❌ Add Data Export (GDPR)
+18. ❌ Add API Versioning
+19. ❌ Enable TypeScript Strict Mode
+20. ❌ Professional Security Audit
 
 ---
 
