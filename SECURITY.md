@@ -3,12 +3,13 @@
 ## ⚠️ CRITICAL SECURITY WARNING
 
 **This application is currently in DEVELOPMENT ONLY status with the following vulnerabilities:**
-- ❌ **NO DATABASE ENCRYPTION** - All therapy data stored in plaintext SQLite
 - ❌ **NO AUTHENTICATION SYSTEM** - No login or access control
 - ❌ **NO SESSION MANAGEMENT** - Sessions never expire
 - ❌ **NO AUDIT LOGGING** - No tracking of data access
 
-**Recently Fixed (2025-06-13):**
+**Recently Fixed (2025-06-14):**
+- ✅ **DATABASE ENCRYPTION** - SQLCipher with AES-256 encryption
+- ✅ **DATA EXPORT/DELETION** - Full GDPR compliance
 - ✅ **INPUT VALIDATION** - All endpoints protected with Zod schemas
 - ✅ **CSRF PROTECTION** - Double-submit cookie pattern implemented
 - ✅ **SQL INJECTION** - Field whitelisting prevents injection attacks

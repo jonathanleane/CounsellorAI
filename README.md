@@ -3,12 +3,13 @@
 > ## ⚠️ **DEVELOPMENT ONLY - DO NOT USE FOR REAL THERAPY DATA** ⚠️
 > 
 > **This application has CRITICAL SECURITY VULNERABILITIES:**
-> - ❌ **NO DATABASE ENCRYPTION** - All therapy conversations stored in plaintext
 > - ❌ **NO AUTHENTICATION** - Anyone with access can read all data
 > - ❌ **NO SESSION MANAGEMENT** - Sessions never expire
 > - ❌ **NO AUDIT LOGGING** - No tracking of data access
 > 
-> **Recently Fixed (2025-06-13):**
+> **Recently Fixed (2025-06-14):**
+> - ✅ Database encryption (SQLCipher with AES-256)
+> - ✅ Data export for GDPR compliance
 > - ✅ Input validation (Zod schemas)
 > - ✅ SQL injection protection
 > - ✅ Sensitive data redaction in logs

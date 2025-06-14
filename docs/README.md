@@ -4,13 +4,18 @@ This documentation provides a comprehensive overview of the CounsellorAI applica
 
 ## ⚠️ CRITICAL SECURITY WARNING
 
-**This application is currently in DEVELOPMENT ONLY status with critical security vulnerabilities:**
-- ❌ No database encryption (all therapy data stored in plaintext)
-- ❌ No authentication system
-- ❌ SQL injection vulnerabilities
-- ❌ Sensitive data in logs
+**This application is currently in DEVELOPMENT ONLY status with remaining vulnerabilities:**
+- ❌ No authentication system (anyone can access all data)
+- ❌ No session management (sessions never expire)
+- ❌ No audit logging (no tracking of data access)
 
-**DO NOT USE FOR REAL THERAPY DATA UNTIL THESE ISSUES ARE RESOLVED**
+**Recently Fixed (2025-06-14):**
+- ✅ Database encryption with SQLCipher
+- ✅ Data export for GDPR compliance
+- ✅ SQL injection protection
+- ✅ Sensitive data redaction
+
+**DO NOT USE FOR REAL THERAPY DATA UNTIL ALL SECURITY ISSUES ARE RESOLVED**
 
 ## Project Status
 
