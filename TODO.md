@@ -124,11 +124,13 @@ Last Updated: 2025-06-14
 - **Files**: New backup service
 
 ### 15. 📤 Add Data Export (GDPR)
-- [ ] Export user data as JSON
-- [ ] Export therapy sessions
-- [ ] Add delete account option
+- [✓] Export user data as JSON
+- [✓] Export therapy sessions
+- [✓] Add delete account option
 - **Priority**: MEDIUM
-- **Files**: New export routes
+- **Files**: server/src/routes/export.ts, client/src/pages/DataExport.tsx
+- **Status**: ✅ COMPLETED (2025-06-14)
+- **Solution**: Full GDPR compliance with JSON/Text/ZIP export and deletion
 
 ## 🟡 MEDIUM Priority Features
 
@@ -196,9 +198,9 @@ logger.info('Profile updated for user:', redactSensitiveData({ name: profile.nam
 ## 🚀 Progress Tracking
 
 - Total Issues: 20
-- Completed: 14 ✅
+- Completed: 15 ✅
 - In Progress: 0
-- Remaining: 6
+- Remaining: 5
 
 ### Completed Items:
 1. ✅ Add Development Warning to README.md
@@ -213,13 +215,13 @@ logger.info('Profile updated for user:', redactSensitiveData({ name: profile.nam
 11. ✅ Fix Race Condition in Profile Loading
 12. ✅ Fix intake_completed Type Issue
 13. ✅ Update Security Documentation
+15. ✅ Add Data Export (GDPR Compliance)
 16. ✅ Implement Streak Calculation
 17. ✅ Add Request Size Limits
 
 ### Remaining Critical Items:
 3. ❌ Add Authentication System
 14. ❌ Implement Backup Functionality  
-15. ❌ Add Data Export (GDPR)
 18. ❌ Add API Versioning
 19. ❌ Enable TypeScript Strict Mode
 20. ❌ Professional Security Audit
