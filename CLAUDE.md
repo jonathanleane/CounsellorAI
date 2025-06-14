@@ -14,6 +14,7 @@
 - ✅ Request size limits (1MB DoS protection)
 - ✅ Automatic encrypted backups
 - ✅ API versioning for future compatibility
+- ✅ Token truncation for long conversations (2025-06-14)
 
 **This is a personal project for:**
 - Learning and experimenting with AI therapy applications
@@ -52,11 +53,12 @@ All planned features and security improvements have been implemented:
 
 ### Current Architecture
 - **Frontend**: React 18 with TypeScript, Material-UI 5, Vite
-- **Backend**: Express.js with TypeScript on Node.js 18+
+- **Backend**: Express.js with TypeScript on Node.js 18+ (v24 compatible)
 - **Database**: SQLite with SQLCipher encryption, Firebase support completed
 - **AI Models**: OpenAI GPT-4o, Anthropic Claude 3.5 Sonnet, Google Gemini 2.0 Flash
 - **State Management**: Zustand (client), React Query (server state)
 - **Security**: JWT authentication, database encryption, CSRF protection, input validation
+- **Dependencies**: All up to date as of June 2025
 
 ### Security Implementation
 1. **API Keys**: ✅ Properly managed via environment variables in `.env`
@@ -247,6 +249,18 @@ const response = await aiService.generateResponse(
 - **Gemini**: Gemini 2.0 Flash Experimental (Google's fastest)
 - **Model Selection**: Users can change preferred model in preferences
 - **Automatic Fallback**: Falls back to GPT-4o if other models fail
+
+### Token Truncation System (NEW - 2025-06-14)
+- **Feature**: Smart conversation truncation for AI token limits
+- **Implementation**:
+  - Model-aware token limits (8K-20K depending on model)
+  - Preserves system prompts, first greeting, recent messages
+  - Estimates tokens using 4 chars = 1 token approximation
+  - Graceful degradation with multiple fallback levels
+  - Automatic truncation in all AI interactions
+- **Files Added**:
+  - `/server/src/utils/messageTruncation.ts` - Truncation logic
+  - `/TOKEN_TRUNCATION_GUIDE.md` - Complete documentation
 
 ### Other Recent Updates
 - Firebase configuration check

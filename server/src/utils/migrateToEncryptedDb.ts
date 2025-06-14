@@ -39,7 +39,7 @@ async function migrateToEncryptedDatabase() {
   // Open old database
   const oldDb = new sqlite3.Database(oldDbPath);
   const getAsync = promisify(oldDb.get.bind(oldDb));
-  const allAsync = promisify(oldDb.all.bind(oldDb));
+  const allAsync = promisify(oldDb.all.bind(oldDb)) as (sql: string) => Promise<any[]>;
 
   // Create new encrypted database
   const newDb = new sqlcipher.Database(newDbPath);
@@ -101,76 +101,91 @@ async function migrateToEncryptedDatabase() {
 
     // Migrate profiles
     console.log('Migrating profiles...');
-    const profiles = await allAsync('SELECT * FROM profiles');
-    for (const profile of profiles || []) {
-      await runAsync(`
-        INSERT INTO profiles (
-          id, name, demographics, spirituality, therapy_goals,
-          preferences, health, mental_health_screening, sensitive_topics,
-          personal_details, intake_completed, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        profile.id,
-        profile.name,
-        profile.demographics,
-        profile.spirituality,
-        profile.therapy_goals,
-        profile.preferences,
-        profile.health,
-        profile.mental_health_screening,
-        profile.sensitive_topics,
-        profile.personal_details,
-        profile.intake_completed,
-        profile.created_at,
-        profile.updated_at
-      ]);
+    const profiles = await allAsync('SELECT * FROM profiles') || [];
+    for (const profile of profiles) {
+      await new Promise((resolve, reject) => {
+        newDb.run(`
+          INSERT INTO profiles (
+            id, name, demographics, spirituality, therapy_goals,
+            preferences, health, mental_health_screening, sensitive_topics,
+            personal_details, intake_completed, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          profile.id,
+          profile.name,
+          profile.demographics,
+          profile.spirituality,
+          profile.therapy_goals,
+          profile.preferences,
+          profile.health,
+          profile.mental_health_screening,
+          profile.sensitive_topics,
+          profile.personal_details,
+          profile.intake_completed,
+          profile.created_at,
+          profile.updated_at
+        ], (err) => {
+          if (err) reject(err);
+          else resolve(undefined);
+        });
+      });
     }
-    console.log(`✅ Migrated ${profiles?.length || 0} profiles`);
+    console.log(`✅ Migrated ${profiles.length} profiles`);
 
     // Migrate conversations
     console.log('Migrating conversations...');
-    const conversations = await allAsync('SELECT * FROM conversations');
-    for (const conversation of conversations || []) {
-      await runAsync(`
-        INSERT INTO conversations (
-          id, session_type, status, initial_mood, end_mood,
-          duration, model, ai_summary, identified_patterns,
-          followup_suggestions, timestamp, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        conversation.id,
-        conversation.session_type,
-        conversation.status,
-        conversation.initial_mood,
-        conversation.end_mood,
-        conversation.duration,
-        conversation.model,
-        conversation.ai_summary,
-        conversation.identified_patterns,
-        conversation.followup_suggestions,
-        conversation.timestamp,
-        conversation.updated_at
-      ]);
+    const conversations = await allAsync('SELECT * FROM conversations') || [];
+    for (const conversation of conversations) {
+      await new Promise((resolve, reject) => {
+        newDb.run(`
+          INSERT INTO conversations (
+            id, session_type, status, initial_mood, end_mood,
+            duration, model, ai_summary, identified_patterns,
+            followup_suggestions, timestamp, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          conversation.id,
+          conversation.session_type,
+          conversation.status,
+          conversation.initial_mood,
+          conversation.end_mood,
+          conversation.duration,
+          conversation.model,
+          conversation.ai_summary,
+          conversation.identified_patterns,
+          conversation.followup_suggestions,
+          conversation.timestamp,
+          conversation.updated_at
+        ], (err) => {
+          if (err) reject(err);
+          else resolve(undefined);
+        });
+      });
     }
-    console.log(`✅ Migrated ${conversations?.length || 0} conversations`);
+    console.log(`✅ Migrated ${conversations.length} conversations`);
 
     // Migrate messages
     console.log('Migrating messages...');
-    const messages = await allAsync('SELECT * FROM messages');
-    for (const message of messages || []) {
-      await runAsync(`
-        INSERT INTO messages (
-          id, conversation_id, role, content, timestamp
-        ) VALUES (?, ?, ?, ?, ?)
-      `, [
-        message.id,
-        message.conversation_id,
-        message.role,
-        message.content,
-        message.timestamp
-      ]);
+    const messages = await allAsync('SELECT * FROM messages') || [];
+    for (const message of messages) {
+      await new Promise((resolve, reject) => {
+        newDb.run(`
+          INSERT INTO messages (
+            id, conversation_id, role, content, timestamp
+          ) VALUES (?, ?, ?, ?, ?)
+        `, [
+          message.id,
+          message.conversation_id,
+          message.role,
+          message.content,
+          message.timestamp
+        ], (err) => {
+          if (err) reject(err);
+          else resolve(undefined);
+        });
+      });
     }
-    console.log(`✅ Migrated ${messages?.length || 0} messages`);
+    console.log(`✅ Migrated ${messages.length} messages`);
 
     // Close databases
     await new Promise<void>((resolve) => oldDb.close(() => resolve()));

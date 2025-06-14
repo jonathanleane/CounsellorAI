@@ -8,6 +8,7 @@ import { useProfile } from '@/hooks/useProfile';
 
 import Layout from '@/components/Layout';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { OnboardedRoute } from '@/components/OnboardedRoute';
 import Dashboard from '@/pages/Dashboard';
 import Conversation from '@/pages/Conversation';
 import History from '@/pages/History';
@@ -22,6 +23,7 @@ import NotFound from '@/pages/NotFound';
 
 function App() {
   const { isAuthenticated } = useAuthStore();
+  // Only fetch profile if authenticated
   const { data: profile, isLoading } = useProfile();
   const setProfile = useProfileStore((state) => state.setProfile);
 
@@ -61,31 +63,31 @@ function App() {
                 <Routes>
                   <Route
                     path="/"
-                    element={profile ? <Dashboard /> : <Navigate to="/onboarding" />}
+                    element={<OnboardedRoute><Dashboard /></OnboardedRoute>}
                   />
                   <Route
                     path="/dashboard"
-                    element={profile ? <Dashboard /> : <Navigate to="/onboarding" />}
+                    element={<OnboardedRoute><Dashboard /></OnboardedRoute>}
                   />
                   <Route
                     path="/conversation/:id"
-                    element={profile ? <Conversation /> : <Navigate to="/onboarding" />}
+                    element={<OnboardedRoute><Conversation /></OnboardedRoute>}
                   />
                   <Route
                     path="/history"
-                    element={profile ? <History /> : <Navigate to="/onboarding" />}
+                    element={<OnboardedRoute><History /></OnboardedRoute>}
                   />
                   <Route
                     path="/profile"
-                    element={profile ? <Profile /> : <Navigate to="/onboarding" />}
+                    element={<OnboardedRoute><Profile /></OnboardedRoute>}
                   />
                   <Route
                     path="/therapist-brain"
-                    element={profile ? <TherapistBrain /> : <Navigate to="/onboarding" />}
+                    element={<OnboardedRoute><TherapistBrain /></OnboardedRoute>}
                   />
                   <Route
                     path="/export"
-                    element={profile ? <DataExport /> : <Navigate to="/onboarding" />}
+                    element={<OnboardedRoute><DataExport /></OnboardedRoute>}
                   />
                   <Route
                     path="/change-password"

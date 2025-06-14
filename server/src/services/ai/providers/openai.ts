@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { AIModel, AIResponse, SessionSummary, PersonalDetails } from '../types';
 import { buildTherapySystemPrompt, buildSummaryPrompt, buildPersonalDetailsExtractionPrompt } from '../prompts/therapyPrompt';
 import { logger } from '../../../utils/logger';
+import { safeParse, safeParseObject } from '../../../utils/safeParse';
 
 export class OpenAIService {
   private client: OpenAI | null = null;
@@ -99,7 +100,7 @@ export class OpenAIService {
       });
 
       const response = completion.choices[0].message.content || '{}';
-      return JSON.parse(response);
+      return safeParseObject(response, 'openai.generateSummary');
     } catch (error) {
       logger.error('OpenAI summary generation error:', error);
       return {
@@ -132,7 +133,7 @@ export class OpenAIService {
       });
 
       const response = completion.choices[0].message.content || '{}';
-      return JSON.parse(response);
+      return safeParseObject(response, 'openai.extractPersonalDetails');
     } catch (error) {
       logger.error('OpenAI personal details extraction error:', error);
       return {};

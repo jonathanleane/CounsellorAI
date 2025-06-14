@@ -80,13 +80,18 @@ export default function Register() {
       
       // Redirect to login after 2 seconds
       setTimeout(() => {
-        navigate('/login');
+        navigate('/login', { replace: true });
       }, 2000);
     } catch (err: any) {
-      if (err.response?.data?.error === 'Username already exists') {
+      const errorMessage = err.response?.data?.error;
+      if (errorMessage === 'Username already exists') {
         setError('This username is already taken. Please choose another.');
+      } else if (typeof errorMessage === 'string') {
+        setError(errorMessage);
+      } else if (errorMessage?.message) {
+        setError(errorMessage.message);
       } else {
-        setError(err.response?.data?.error || 'Registration failed. Please try again.');
+        setError('Registration failed. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -97,12 +102,11 @@ export default function Register() {
     return (
       <Container component="main" maxWidth="xs">
         <Box sx={{ marginTop: 8 }}>
-          <Alert severity="success">
-            <Typography variant="h6">Registration successful!</Typography>
-            <Typography variant="body2">
-              Redirecting to login page...
-            </Typography>
-          </Alert>
+          <Paper elevation={3} sx={{ padding: 4 }}>
+            <Alert severity="success">
+              Registration successful! Redirecting to login page...
+            </Alert>
+          </Paper>
         </Box>
       </Container>
     );

@@ -2,17 +2,18 @@ import sqlite3 from '@journeyapps/sqlcipher';
 import path from 'path';
 import { logger } from '../../utils/logger';
 import fs from 'fs';
-import { DatabaseInterface } from './interface';
+import { BaseSQLiteDatabase } from './baseSqlite';
 import { redactSensitiveData } from '../../utils/redaction';
 
 const dbPath = path.join(__dirname, '../../../../database/counsellor_encrypted.db');
 
-export class EncryptedSQLiteDatabase implements DatabaseInterface {
-  private db: sqlite3.Database | null = null;
+export class EncryptedSQLiteDatabase extends BaseSQLiteDatabase {
+  protected db: sqlite3.Database | null = null;
   private encryptionKey: string;
   private initPromise: Promise<void> | null = null;
 
   constructor() {
+    super();
     const key = process.env.DATABASE_ENCRYPTION_KEY;
     if (!key) {
       throw new Error('DATABASE_ENCRYPTION_KEY environment variable is required for encrypted database');
@@ -43,7 +44,8 @@ export class EncryptedSQLiteDatabase implements DatabaseInterface {
           return;
         }
 
-        // Set encryption key
+        // Set encryption key - PRAGMA doesn't support parameterized queries
+        // The key is from environment variable, not user input, so it's safe
         this.db!.run(`PRAGMA key = '${this.encryptionKey}'`, (err) => {
           if (err) {
             logger.error('Error setting encryption key:', err);
@@ -111,6 +113,8 @@ export class EncryptedSQLiteDatabase implements DatabaseInterface {
         ai_summary TEXT,
         identified_patterns TEXT,
         followup_suggestions TEXT,
+        learned_details TEXT,
+        learning_changes TEXT,
         timestamp TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
         updated_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
       )`,
@@ -138,394 +142,54 @@ export class EncryptedSQLiteDatabase implements DatabaseInterface {
     }
 
     logger.info('Encrypted SQLite tables created successfully');
+    
+    // Run migrations for existing databases
+    await this.runMigrations();
   }
 
-  private ensureInitialized(): void {
+
+  protected ensureInitialized(): void {
     if (!this.db) {
       throw new Error('Database not initialized. Call initialize() first.');
     }
   }
 
-  // Profile methods
-  async getProfile(): Promise<any> {
-    this.ensureInitialized();
-    return new Promise((resolve, reject) => {
-      this.db!.get('SELECT * FROM profiles WHERE id = ?', ['default'], (err, row) => {
-        if (err) {
-          logger.error('Error getting profile:', err);
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
-    });
-  }
-
+  // Override createProfile to add redaction
   async createProfile(data: any): Promise<any> {
-    this.ensureInitialized();
-    const {
-      name, demographics, spirituality, therapy_goals,
-      preferences, health, mental_health_screening, sensitive_topics
-    } = data;
-
-    return new Promise((resolve, reject) => {
-      const query = `
-        INSERT OR REPLACE INTO profiles (
-          id, name, demographics, spirituality, therapy_goals,
-          preferences, health, mental_health_screening, sensitive_topics,
-          updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-      `;
-
-      this.db!.run(
-        query,
-        [
-          'default',
-          name,
-          JSON.stringify(demographics || {}),
-          JSON.stringify(spirituality || {}),
-          JSON.stringify(therapy_goals || {}),
-          JSON.stringify(preferences || {}),
-          JSON.stringify(health || {}),
-          JSON.stringify(mental_health_screening || {}),
-          JSON.stringify(sensitive_topics || {})
-        ],
-        (err) => {
-          if (err) {
-            logger.error('Error creating profile:', err);
-            reject(err);
-          } else {
-            logger.info('Profile created/updated successfully', redactSensitiveData({ name }));
-            resolve({ id: 'default', ...data });
-          }
-        }
-      );
-    });
+    const result = await super.createProfile(data);
+    logger.info('Profile created/updated successfully', redactSensitiveData({ name: data.name }));
+    return result;
   }
 
-  async updateProfile(field: string, value: any): Promise<void> {
-    this.ensureInitialized();
-    
-    // Whitelist allowed fields to prevent SQL injection
-    const allowedFields = [
-      'name', 'demographics', 'spirituality', 'therapy_goals',
-      'preferences', 'health', 'mental_health_screening', 'sensitive_topics',
-      'personal_details', 'intake_completed'
-    ];
-    
-    if (!allowedFields.includes(field)) {
-      throw new Error(`Invalid field name: ${field}`);
-    }
-
-    const valueStr = typeof value === 'object' ? JSON.stringify(value) : value;
-    
-    return new Promise((resolve, reject) => {
-      this.db!.run(
-        `UPDATE profiles SET ${field} = ?, updated_at = datetime('now') WHERE id = ?`,
-        [valueStr, 'default'],
-        (err) => {
-          if (err) {
-            logger.error('Error updating profile:', err);
-            reject(err);
-          } else {
-            logger.info(`Profile field ${field} updated`, redactSensitiveData({ field }));
-            resolve();
-          }
-        }
-      );
-    });
-  }
-
-  // Conversation methods
-  async getAllConversations(): Promise<any[]> {
-    this.ensureInitialized();
-    return new Promise((resolve, reject) => {
-      this.db!.all('SELECT * FROM conversations ORDER BY timestamp DESC', (err, rows) => {
-        if (err) {
-          logger.error('Error getting conversations:', err);
-          reject(err);
-        } else {
-          resolve(rows || []);
-        }
-      });
-    });
-  }
-
-  async getRecentConversations(limit: number = 5): Promise<any[]> {
-    this.ensureInitialized();
-    return new Promise((resolve, reject) => {
-      this.db!.all(
-        'SELECT * FROM conversations ORDER BY timestamp DESC LIMIT ?',
-        [limit],
-        (err, rows) => {
-          if (err) {
-            logger.error('Error getting recent conversations:', err);
-            reject(err);
-          } else {
-            resolve(rows || []);
-          }
-        }
-      );
-    });
-  }
-
-  async getConversation(id: string): Promise<any> {
-    this.ensureInitialized();
-    return new Promise((resolve, reject) => {
-      this.db!.get('SELECT * FROM conversations WHERE id = ?', [id], async (err, conversation) => {
-        if (err) {
-          logger.error('Error getting conversation:', err);
-          reject(err);
-        } else if (!conversation) {
-          resolve(null);
-        } else {
-          try {
-            const messages = await this.getMessages(id);
-            resolve({ ...conversation, messages });
-          } catch (msgErr) {
-            reject(msgErr);
-          }
-        }
-      });
-    });
-  }
-
+  // Override createConversation to add redaction
   async createConversation(data: any): Promise<any> {
-    this.ensureInitialized();
-    const id = Date.now().toString();
-    const { session_type, initial_mood, model } = data;
-
-    return new Promise((resolve, reject) => {
-      const query = `
-        INSERT INTO conversations (id, session_type, initial_mood, model)
-        VALUES (?, ?, ?, ?)
-      `;
-
-      this.db!.run(query, [id, session_type, initial_mood, model], (err) => {
-        if (err) {
-          logger.error('Error creating conversation:', err);
-          reject(err);
-        } else {
-          const result = {
-            id,
-            session_type,
-            initial_mood,
-            model,
-            status: 'active',
-            timestamp: new Date().toISOString(),
-            messages: []
-          };
-          logger.info('Conversation created:', redactSensitiveData({ id, session_type, model }));
-          resolve(result);
-        }
-      });
-    });
+    const result = await super.createConversation(data);
+    logger.info('Conversation created:', redactSensitiveData({ 
+      id: result.id, 
+      session_type: data.session_type, 
+      model: data.model 
+    }));
+    return result;
   }
 
-  async updateConversation(id: string, data: any): Promise<void> {
-    this.ensureInitialized();
-    const fields = Object.keys(data);
-    const values = Object.values(data);
-    values.push(id);
-
-    const setClause = fields.map(field => `${field} = ?`).join(', ');
-
-    return new Promise((resolve, reject) => {
-      this.db!.run(
-        `UPDATE conversations SET ${setClause}, updated_at = datetime('now') WHERE id = ?`,
-        values,
-        (err) => {
-          if (err) {
-            logger.error('Error updating conversation:', err);
-            reject(err);
-          } else {
-            logger.info('Conversation updated:', redactSensitiveData({ id }));
-            resolve();
-          }
-        }
-      );
-    });
-  }
-
-  async deleteConversation(id: string): Promise<void> {
-    this.ensureInitialized();
-    return new Promise((resolve, reject) => {
-      this.db!.run('DELETE FROM conversations WHERE id = ?', [id], (err) => {
-        if (err) {
-          logger.error('Error deleting conversation:', err);
-          reject(err);
-        } else {
-          logger.info('Conversation deleted:', redactSensitiveData({ id }));
-          resolve();
-        }
-      });
-    });
-  }
-
-  // Message methods
-  async getMessages(conversationId: string): Promise<any[]> {
-    this.ensureInitialized();
-    return new Promise((resolve, reject) => {
-      this.db!.all(
-        'SELECT * FROM messages WHERE conversation_id = ? ORDER BY timestamp ASC',
-        [conversationId],
-        (err, rows) => {
-          if (err) {
-            logger.error('Error getting messages:', err);
-            reject(err);
-          } else {
-            resolve(rows || []);
-          }
-        }
-      );
-    });
-  }
-
+  // Override addMessage to add redaction  
   async addMessage(conversationId: string, data: any): Promise<any> {
-    this.ensureInitialized();
-    const id = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const { role, content } = data;
-
-    return new Promise((resolve, reject) => {
-      const query = `
-        INSERT INTO messages (id, conversation_id, role, content)
-        VALUES (?, ?, ?, ?)
-      `;
-
-      this.db!.run(query, [id, conversationId, role, content], (err) => {
-        if (err) {
-          logger.error('Error adding message:', err);
-          reject(err);
-        } else {
-          const result = {
-            id,
-            conversation_id: conversationId,
-            role,
-            content,
-            timestamp: new Date().toISOString()
-          };
-          logger.info('Message added:', redactSensitiveData({ id, conversationId, role }));
-          resolve(result);
-        }
-      });
-    });
+    const result = await super.addMessage(conversationId, data);
+    logger.info('Message added:', redactSensitiveData({ 
+      id: result.id, 
+      conversationId, 
+      role: data.role 
+    }));
+    return result;
   }
 
-  async deleteMessage(conversationId: string, messageId: string): Promise<void> {
-    this.ensureInitialized();
-    return new Promise((resolve, reject) => {
-      this.db!.run(
-        'DELETE FROM messages WHERE id = ? AND conversation_id = ?',
-        [messageId, conversationId],
-        (err) => {
-          if (err) {
-            logger.error('Error deleting message:', err);
-            reject(err);
-          } else {
-            logger.info('Message deleted:', redactSensitiveData({ messageId, conversationId }));
-            resolve();
-          }
-        }
-      );
-    });
-  }
 
-  // User methods
-  async getUserById(id: number): Promise<any> {
-    this.ensureInitialized();
-    return new Promise((resolve, reject) => {
-      this.db!.get('SELECT * FROM users WHERE id = ?', [id], (err, row) => {
-        if (err) {
-          logger.error('Error getting user by ID:', err);
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
-    });
-  }
 
-  async getUserByUsername(username: string): Promise<any> {
-    this.ensureInitialized();
-    return new Promise((resolve, reject) => {
-      this.db!.get('SELECT * FROM users WHERE username = ?', [username], (err, row) => {
-        if (err) {
-          logger.error('Error getting user by username:', err);
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
-    });
-  }
 
-  async createUser(username: string, passwordHash: string): Promise<number> {
-    this.ensureInitialized();
-    return new Promise((resolve, reject) => {
-      this.db!.run(
-        'INSERT INTO users (username, password_hash) VALUES (?, ?)',
-        [username, passwordHash],
-        function(err) {
-          if (err) {
-            logger.error('Error creating user:', err);
-            reject(err);
-          } else {
-            resolve(this.lastID);
-          }
-        }
-      );
-    });
-  }
 
-  async updatePassword(userId: number, passwordHash: string): Promise<void> {
-    this.ensureInitialized();
-    return new Promise((resolve, reject) => {
-      this.db!.run(
-        'UPDATE users SET password_hash = ? WHERE id = ?',
-        [passwordHash, userId],
-        (err) => {
-          if (err) {
-            logger.error('Error updating password:', err);
-            reject(err);
-          } else {
-            resolve();
-          }
-        }
-      );
-    });
-  }
 
-  async updateLastLogin(userId: number): Promise<void> {
-    this.ensureInitialized();
-    return new Promise((resolve, reject) => {
-      this.db!.run(
-        'UPDATE users SET last_login = datetime("now") WHERE id = ?',
-        [userId],
-        (err) => {
-          if (err) {
-            logger.error('Error updating last login:', err);
-            reject(err);
-          } else {
-            resolve();
-          }
-        }
-      );
-    });
-  }
 
-  async deleteUser(userId: number): Promise<void> {
-    this.ensureInitialized();
-    return new Promise((resolve, reject) => {
-      this.db!.run('DELETE FROM users WHERE id = ?', [userId], (err) => {
-        if (err) {
-          logger.error('Error deleting user:', err);
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
-  }
+
 
   close(): void {
     if (this.db) {

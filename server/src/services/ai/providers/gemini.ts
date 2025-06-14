@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AIModel, AIResponse, SessionSummary, PersonalDetails } from '../types';
 import { buildTherapySystemPrompt, buildSummaryPrompt, buildPersonalDetailsExtractionPrompt } from '../prompts/therapyPrompt';
 import { logger } from '../../../utils/logger';
+import { safeParse, safeParseObject } from '../../../utils/safeParse';
 
 export class GeminiService {
   private client: GoogleGenerativeAI | null = null;
@@ -111,7 +112,8 @@ export class GeminiService {
       // Extract JSON from response
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        const parsed = safeParse(jsonMatch[0], null, 'gemini.generateSummary');
+        if (parsed) return parsed;
       }
 
       throw new Error('Failed to extract JSON from response');
@@ -146,7 +148,7 @@ export class GeminiService {
 
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        return safeParseObject(jsonMatch[0], 'gemini.extractPersonalDetails');
       }
       
       return {};

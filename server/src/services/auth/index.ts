@@ -95,7 +95,7 @@ export class AuthService {
   generateToken(payload: TokenPayload): string {
     return jwt.sign(payload, this.jwtSecret, {
       expiresIn: this.jwtExpiresIn
-    });
+    } as jwt.SignOptions);
   }
 
   verifyToken(token: string): TokenPayload {

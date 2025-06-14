@@ -136,17 +136,18 @@ profile ? <Component /> : <Navigate to="/onboarding" />
 #### Collections Structure
 ```
 profiles/
-  └── default
+  └── {userId}
 conversations/
   └── {id}
       └── messages/
           └── {messageId}
 ```
 
-#### Security Rules
-- Currently permissive (development)
-- Need tightening for production
-- Consider user authentication
+#### Security Implementation
+- JWT authentication required for all endpoints
+- User-specific data isolation
+- CSRF protection on state-changing operations
+- Input validation with Zod schemas
 
 #### Migration Tools
 - `migrateToFirebase.js` - SQLite to Firebase

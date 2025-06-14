@@ -15,7 +15,7 @@ router.use('/sessions', sessionRoutes);
 router.use('/profile', profileRoutes);
 router.use('/health', healthRoutes);
 router.use('/test', testRoutes);
-router.use('/', exportRoutes);  // Export routes at /api/v1/export/*
+router.use('/export', exportRoutes);  // Export routes at /api/v1/export/*
 router.use('/backup', backupRoutes);
 
 // Version info endpoint

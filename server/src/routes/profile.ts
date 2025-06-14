@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getDatabase } from '../services/database';
 import { logger } from '../utils/logger';
 import { redactSensitiveData, createSafeLogObject } from '../utils/redaction';
+import { safeParse, safeParseArray, safeParseObject } from '../utils/safeParse';
 import { validateBody, createProfileSchema, updateProfileSchema, updateBrainSchema } from '../validation/schemas';
 import { authenticateToken } from '../middleware/auth';
 
@@ -32,14 +33,14 @@ router.get('/', async (req, res, next) => {
     // Parse JSON fields
     const parsedProfile = {
       ...profile,
-      demographics: JSON.parse(profile.demographics || '{}'),
-      spirituality: JSON.parse(profile.spirituality || '{}'),
-      therapy_goals: JSON.parse(profile.therapy_goals || '{}'),
-      preferences: JSON.parse(profile.preferences || '{}'),
-      health: JSON.parse(profile.health || '{}'),
-      mental_health_screening: JSON.parse(profile.mental_health_screening || '{}'),
-      sensitive_topics: JSON.parse(profile.sensitive_topics || '{}'),
-      personal_details: JSON.parse(profile.personal_details || '{}'),
+      demographics: safeParseObject(profile.demographics, 'profile.get.demographics'),
+      spirituality: safeParseObject(profile.spirituality, 'profile.get.spirituality'),
+      therapy_goals: safeParseObject(profile.therapy_goals, 'profile.get.therapy_goals'),
+      preferences: safeParseObject(profile.preferences, 'profile.get.preferences'),
+      health: safeParseObject(profile.health, 'profile.get.health'),
+      mental_health_screening: safeParseObject(profile.mental_health_screening, 'profile.get.mental_health_screening'),
+      sensitive_topics: safeParseObject(profile.sensitive_topics, 'profile.get.sensitive_topics'),
+      personal_details: safeParseObject(profile.personal_details, 'profile.get.personal_details'),
       intake_completed: Boolean(profile.intake_completed)
     };
     
@@ -199,7 +200,7 @@ router.get('/brain', async (req, res, next) => {
       return;
     }
     
-    const personalDetails = JSON.parse(profile.personal_details || '{}');
+    const personalDetails = safeParseObject(profile.personal_details, 'profile.brain.get');
     res.json({ personalDetails });
   } catch (error) {
     logger.error('Error fetching therapist brain data:', error);
@@ -234,7 +235,7 @@ router.post('/brain', validateBody(updateBrainSchema), async (req, res, next) =>
     }
     
     // Get current personal details
-    let personalDetails = JSON.parse(profile.personal_details || '{}');
+    let personalDetails = safeParseObject(profile.personal_details, 'profile.brain.update');
     
     // Create category if it doesn't exist
     if (!personalDetails[category]) {

@@ -103,6 +103,9 @@ export default function Onboarding() {
     mental_health_screening: {
       previous_therapy: '',
       current_challenges: '',
+      previous_diagnosis: '',
+      current_medications: '',
+      therapy_history: '',
     },
     sensitive_topics: {
       avoid_topics: '',
@@ -113,11 +116,11 @@ export default function Onboarding() {
   
   const createProfileMutation = useMutation({
     mutationFn: profileApi.create,
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       console.log('Profile created successfully:', response.data);
       setProfile(response.data);
-      // Invalidate the profile query to trigger a refetch
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // Invalidate the profile query to trigger a refetch and wait for it
+      await queryClient.invalidateQueries({ queryKey: ['profile'] });
       // Navigate using React Router
       navigate('/');
     },
@@ -161,7 +164,7 @@ export default function Onboarding() {
     setFormData((prev) => ({
       ...prev,
       [section]: {
-        ...prev[section as keyof typeof prev],
+        ...(prev[section as keyof typeof prev] as any),
         [field]: value,
       },
     }));

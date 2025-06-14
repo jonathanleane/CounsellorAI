@@ -26,6 +26,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { sessionsApi } from '@/services/api';
 import { useProfileStore } from '@/stores/profileStore';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface Message {
   id: string;
@@ -44,26 +45,8 @@ export default function Conversation() {
   const startTimeRef = useRef<Date>(new Date());
   const [showLearningSnackbar, setShowLearningSnackbar] = useState(false);
   const [learningMessage, setLearningMessage] = useState('');
-
-  // Timer effect with proper cleanup
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-    
-    // Only start timer if session is active
-    if (session?.data?.status === 'active') {
-      timer = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTimeRef.current.getTime()) / 1000);
-        setSessionDuration(elapsed);
-      }, 1000);
-    }
-
-    // Cleanup function that properly clears the timer
-    return () => {
-      if (timer) {
-        clearInterval(timer);
-      }
-    };
-  }, [session?.data?.status]); // Re-run when session status changes
+  const hasTriedCreatingSession = useRef(false);
+  const [endSessionDialogOpen, setEndSessionDialogOpen] = useState(false);
 
   // Fetch session data
   const { data: session, isLoading: sessionLoading } = useQuery({
@@ -78,6 +61,10 @@ export default function Conversation() {
     onSuccess: (response) => {
       // Navigate to the new session ID
       navigate(`/conversation/${response.data.id}`, { replace: true });
+    },
+    onError: () => {
+      // Reset the flag on error so user can retry
+      hasTriedCreatingSession.current = false;
     },
   });
 
@@ -103,7 +90,7 @@ export default function Conversation() {
       try {
         const updatedSession = await sessionsApi.get(id!);
         if (updatedSession.data.learning_changes) {
-          const changes = JSON.parse(updatedSession.data.learning_changes);
+          const changes = updatedSession.data.learning_changes;
           if (changes.length > 0) {
             setLearningMessage(`I learned ${changes.length} new thing${changes.length > 1 ? 's' : ''} about you from this session!`);
             setShowLearningSnackbar(true);
@@ -124,18 +111,46 @@ export default function Conversation() {
     },
   });
 
+  // Timer effect with proper cleanup
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    
+    // Only start timer if session is active
+    if (session?.data?.status === 'active') {
+      startTimeRef.current = new Date(); // Reset start time when session becomes active
+      timer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTimeRef.current.getTime()) / 1000);
+        setSessionDuration(elapsed);
+      }, 1000);
+    }
+
+    // Cleanup function that properly clears the timer
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
+  }, [session?.data?.status, id]); // Add dependencies to restart timer when session status changes
+
   // Create new session if we're on /conversation/new
   useEffect(() => {
-    if (id === 'new' && !createSessionMutation.isPending && !createSessionMutation.isSuccess) {
+    if (id === 'new' && !hasTriedCreatingSession.current && !createSessionMutation.isPending && !createSessionMutation.isSuccess) {
+      hasTriedCreatingSession.current = true; // Prevent multiple attempts
+      
       // Get user's model preference from profile
       const profileData = useProfileStore.getState().profile;
       let modelPreference;
       
       if (profileData?.preferences) {
-        const prefs = typeof profileData.preferences === 'string' 
-          ? JSON.parse(profileData.preferences) 
-          : profileData.preferences;
-        modelPreference = prefs.ai_model;
+        try {
+          const prefs = typeof profileData.preferences === 'string' 
+            ? JSON.parse(profileData.preferences) 
+            : profileData.preferences;
+          modelPreference = prefs.ai_model;
+        } catch (error) {
+          console.error('Error parsing preferences:', error);
+          // Continue without model preference
+        }
       }
       
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -162,13 +177,16 @@ export default function Conversation() {
 
   const handleEndSession = () => {
     if (!id || id === 'new') return;
-    
-    if (window.confirm('Are you sure you want to end this session?')) {
-      endSessionMutation.mutate({
-        sessionId: id,
-        duration: sessionDuration,
-      });
-    }
+    setEndSessionDialogOpen(true);
+  };
+
+  const confirmEndSession = () => {
+    if (!id || id === 'new') return;
+    endSessionMutation.mutate({
+      sessionId: id,
+      duration: sessionDuration,
+    });
+    setEndSessionDialogOpen(false);
   };
 
   const formatDuration = (seconds: number) => {
@@ -348,6 +366,17 @@ export default function Conversation() {
           🧠 {learningMessage}
         </Alert>
       </Snackbar>
+
+      {/* End Session Confirmation Dialog */}
+      <ConfirmDialog
+        open={endSessionDialogOpen}
+        title="End Session"
+        message="Are you sure you want to end this session? The AI will generate a summary of your conversation."
+        confirmText="End Session"
+        cancelText="Continue Session"
+        onConfirm={confirmEndSession}
+        onCancel={() => setEndSessionDialogOpen(false)}
+      />
     </Container>
   );
 }

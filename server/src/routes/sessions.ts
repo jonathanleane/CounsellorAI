@@ -7,6 +7,8 @@ import { logger } from '../utils/logger';
 import { formatInTimeZone } from 'date-fns-tz';
 import { sanitizeUserInput, detectInjectionAttempt } from '../utils/security';
 import { mergePersonalDetails, sanitizePersonalDetails } from '../utils/personalDetailsMerger';
+import { truncateMessages } from '../utils/messageTruncation';
+import { safeParse, safeParseArray, safeParseObject } from '../utils/safeParse';
 import { 
   validateBody, 
   validateQuery, 
@@ -21,20 +23,44 @@ const router = Router();
 // Apply authentication to all session routes
 router.use(authenticateToken);
 
-// Get all sessions
+// Get all sessions with pagination
 router.get('/', async (req, res, next) => {
   try {
     const db = getDatabase();
+    
+    // Parse pagination parameters
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100); // Max 100 per page
+    const offset = (page - 1) * limit;
+    
+    // Get paginated conversations
     const conversations = await db.getAllConversations();
     
+    // Calculate total count
+    const totalCount = conversations.length;
+    const totalPages = Math.ceil(totalCount / limit);
+    
+    // Slice for pagination
+    const paginatedConversations = conversations.slice(offset, offset + limit);
+    
     // Parse JSON fields for each conversation
-    const parsedConversations = conversations.map(conv => ({
+    const parsedConversations = paginatedConversations.map(conv => ({
       ...conv,
-      identified_patterns: conv.identified_patterns ? JSON.parse(conv.identified_patterns) : [],
-      followup_suggestions: conv.followup_suggestions ? JSON.parse(conv.followup_suggestions) : []
+      identified_patterns: safeParseArray(conv.identified_patterns, 'sessions.getAll.patterns'),
+      followup_suggestions: safeParseArray(conv.followup_suggestions, 'sessions.getAll.suggestions')
     }));
     
-    res.json(parsedConversations);
+    res.json({
+      data: parsedConversations,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
+    });
   } catch (error) {
     logger.error('Error fetching conversations:', error);
     next(error);
@@ -42,17 +68,17 @@ router.get('/', async (req, res, next) => {
 });
 
 // Get recent sessions
-router.get('/recent', validateQuery(limitQuerySchema), async (req, res, next) => {
+router.get('/recent', async (req, res, next) => {
   try {
-    const limit = req.query.limit || 5;
+    const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit) : 5;
     const db = getDatabase();
     const conversations = await db.getRecentConversations(limit);
     
     // Parse JSON fields
     const parsedConversations = conversations.map(conv => ({
       ...conv,
-      identified_patterns: conv.identified_patterns ? JSON.parse(conv.identified_patterns) : [],
-      followup_suggestions: conv.followup_suggestions ? JSON.parse(conv.followup_suggestions) : []
+      identified_patterns: safeParseArray(conv.identified_patterns, 'sessions.getRecent.patterns'),
+      followup_suggestions: safeParseArray(conv.followup_suggestions, 'sessions.getRecent.suggestions')
     }));
     
     res.json(parsedConversations);
@@ -77,8 +103,8 @@ router.get('/:id', async (req, res, next) => {
     // Parse JSON fields
     const parsedConversation = {
       ...conversation,
-      identified_patterns: conversation.identified_patterns ? JSON.parse(conversation.identified_patterns) : [],
-      followup_suggestions: conversation.followup_suggestions ? JSON.parse(conversation.followup_suggestions) : []
+      identified_patterns: safeParseArray(conversation.identified_patterns, 'sessions.getById.patterns'),
+      followup_suggestions: safeParseArray(conversation.followup_suggestions, 'sessions.getById.suggestions')
     };
     
     res.json(parsedConversation);
@@ -164,9 +190,16 @@ Could you tell me a bit about yourself? For instance, what's your current living
         }
       ];
       
+      // Truncate messages (though greeting should never need truncation)
+      const truncatedMessages = truncateMessages(
+        messages,
+        conversation.model as AIModel,
+        profile
+      );
+      
       try {
         const response = await aiService.generateResponse(
-          messages,
+          truncatedMessages,
           profile,
           conversation.model as AIModel
         );
@@ -235,10 +268,22 @@ router.post('/:id/messages', validateBody(addMessageSchema), aiRateLimiter, asyn
     }));
     messages.push({ role: 'user', content: sanitizedContent });
     
+    // Truncate messages to fit within token limits
+    const truncatedMessages = truncateMessages(
+      messages,
+      conversation.model as AIModel,
+      profile
+    );
+    
+    // Log if truncation occurred
+    if (truncatedMessages.length < messages.length) {
+      logger.info(`Conversation ${id} truncated from ${messages.length} to ${truncatedMessages.length} messages for ${conversation.model}`);
+    }
+    
     // Generate AI response
     try {
       const response = await aiService.generateResponse(
-        messages,
+        truncatedMessages,
         profile,
         conversation.model as AIModel
       );
@@ -291,7 +336,10 @@ router.post('/:id/end', validateBody(endSessionSchema), async (req, res, next) =
       duration
     });
     
-    // Generate summary asynchronously
+    // Generate summary asynchronously (fire-and-forget pattern)
+    // This runs in the background to avoid delaying the API response.
+    // Trade-off: If the server crashes before completion, the summary may be lost.
+    // For higher reliability, consider using a job queue like BullMQ.
     generateSessionSummary(id, conversation, duration).catch(error => {
       logger.error('Error generating session summary:', error);
     });
@@ -341,9 +389,15 @@ async function generateSessionSummary(
       content: msg.content
     }));
     
+    // Truncate messages for summary generation
+    const truncatedMessages = truncateMessages(
+      messages,
+      conversation.model as AIModel
+    );
+    
     // Generate summary using AI
     const summary = await aiService.generateSummary(
-      messages,
+      truncatedMessages,
       { initialMood: conversation.initial_mood },
       conversation.model as AIModel
     );
@@ -357,9 +411,9 @@ async function generateSessionSummary(
       try {
         logger.info(`Extracting personal details from session ${conversationId}`);
         
-        // Extract new personal details from conversation
+        // Extract new personal details from conversation (use truncated messages)
         const newDetails = await aiService.extractPersonalDetails(
-          messages,
+          truncatedMessages,
           conversation.model as AIModel
         );
         
@@ -369,7 +423,7 @@ async function generateSessionSummary(
         // Get current profile to merge with
         const profile = await db.getProfile();
         if (profile) {
-          const currentDetails = JSON.parse(profile.personal_details || '{}');
+          const currentDetails = safeParseObject(profile.personal_details, 'sessions.extractPersonalDetails');
           
           // Merge new details with existing
           const { merged, changes } = mergePersonalDetails(currentDetails, sanitizedNewDetails);

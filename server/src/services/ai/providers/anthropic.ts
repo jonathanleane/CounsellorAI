@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { AIModel, AIResponse, SessionSummary, PersonalDetails } from '../types';
 import { buildTherapySystemPrompt, buildSummaryPrompt, buildPersonalDetailsExtractionPrompt } from '../prompts/therapyPrompt';
 import { logger } from '../../../utils/logger';
+import { safeParse, safeParseObject } from '../../../utils/safeParse';
 
 export class AnthropicService {
   private client: Anthropic | null = null;
@@ -110,7 +111,8 @@ export class AnthropicService {
       // Extract JSON from response
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        const parsed = safeParse(jsonMatch[0], null, 'anthropic.generateSummary');
+        if (parsed) return parsed;
       }
 
       throw new Error('Failed to extract JSON from response');
@@ -150,7 +152,7 @@ export class AnthropicService {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        return safeParseObject(jsonMatch[0], 'anthropic.extractPersonalDetails');
       }
       
       return {};

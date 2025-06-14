@@ -32,6 +32,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { sessionsApi } from '@/services/api';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface Session {
   id: string;
@@ -55,23 +56,34 @@ export default function History() {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [filterType, setFilterType] = useState<string>('all');
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
-  // Fetch all sessions
-  const { data: sessions, isLoading } = useQuery({
-    queryKey: ['sessions', 'all'],
-    queryFn: () => sessionsApi.getAll(),
+  // Fetch paginated sessions
+  const { data: sessionsData, isLoading } = useQuery({
+    queryKey: ['sessions', 'all', currentPage, itemsPerPage],
+    queryFn: () => sessionsApi.getAll({ page: currentPage, limit: itemsPerPage }),
   });
+
+  const sessions = sessionsData?.data;
+  const pagination = sessionsData?.pagination;
 
   // Delete session mutation
   const deleteSessionMutation = useMutation({
     mutationFn: sessionsApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      // If we deleted the last item on a page, go back one page
+      if (sessions?.data?.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
     },
   });
 
   // Filter sessions
-  const filteredSessions = sessions?.data?.filter((session: Session) => {
+  const filteredSessions = sessions?.filter((session: Session) => {
     // Search filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
@@ -98,6 +110,7 @@ export default function History() {
     
     if (!groups[weekKey]) {
       groups[weekKey] = {
+        weekKey,
         start: weekStart,
         end: endOfWeek(date),
         sessions: [],
@@ -177,7 +190,10 @@ export default function History() {
               fullWidth
               placeholder="Search sessions..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1); // Reset to first page on search
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -191,7 +207,12 @@ export default function History() {
             <ToggleButtonGroup
               value={filterType}
               exclusive
-              onChange={(e, value) => value && setFilterType(value)}
+              onChange={(e, value) => {
+                if (value) {
+                  setFilterType(value);
+                  setCurrentPage(1); // Reset to first page on filter change
+                }
+              }}
               fullWidth
             >
               <ToggleButton value="all">All</ToggleButton>
@@ -217,6 +238,30 @@ export default function History() {
           </Grid>
         </Grid>
       </Paper>
+
+      {/* Pagination Controls */}
+      {pagination && pagination.totalPages > 1 && (
+        <Paper sx={{ p: 2, mb: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
+          <Button
+            disabled={!pagination.hasPrevPage}
+            onClick={() => setCurrentPage(currentPage - 1)}
+            size="small"
+          >
+            Previous
+          </Button>
+          <Typography variant="body2">
+            Page {pagination.page} of {pagination.totalPages}
+            {' '}({pagination.totalCount} total sessions)
+          </Typography>
+          <Button
+            disabled={!pagination.hasNextPage}
+            onClick={() => setCurrentPage(currentPage + 1)}
+            size="small"
+          >
+            Next
+          </Button>
+        </Paper>
+      )}
 
       {/* Sessions */}
       {filteredSessions.length === 0 ? (
@@ -348,9 +393,8 @@ export default function History() {
                             color="error"
                             startIcon={<DeleteIcon />}
                             onClick={() => {
-                              if (window.confirm('Are you sure you want to delete this session?')) {
-                                deleteSessionMutation.mutate(session.id);
-                              }
+                              setSessionToDelete(session.id);
+                              setDeleteDialogOpen(true);
                             }}
                           >
                             Delete
@@ -427,9 +471,8 @@ export default function History() {
                         color="error"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (window.confirm('Delete this session?')) {
-                            deleteSessionMutation.mutate(session.id);
-                          }
+                          setSessionToDelete(session.id);
+                          setDeleteDialogOpen(true);
                         }}
                       >
                         <DeleteIcon />
@@ -441,6 +484,50 @@ export default function History() {
             ))}
         </Grid>
       )}
+
+      {/* Bottom Pagination Controls */}
+      {pagination && pagination.totalPages > 1 && filteredSessions.length > 0 && (
+        <Paper sx={{ p: 2, mt: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
+          <Button
+            disabled={!pagination.hasPrevPage}
+            onClick={() => setCurrentPage(currentPage - 1)}
+            size="small"
+          >
+            Previous
+          </Button>
+          <Typography variant="body2">
+            Page {pagination.page} of {pagination.totalPages}
+            {' '}({pagination.totalCount} total sessions)
+          </Typography>
+          <Button
+            disabled={!pagination.hasNextPage}
+            onClick={() => setCurrentPage(currentPage + 1)}
+            size="small"
+          >
+            Next
+          </Button>
+        </Paper>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title="Delete Session"
+        message="Are you sure you want to delete this session? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={() => {
+          if (sessionToDelete) {
+            deleteSessionMutation.mutate(sessionToDelete);
+            setDeleteDialogOpen(false);
+            setSessionToDelete(null);
+          }
+        }}
+        onCancel={() => {
+          setDeleteDialogOpen(false);
+          setSessionToDelete(null);
+        }}
+      />
     </Container>
   );
 }

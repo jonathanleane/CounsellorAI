@@ -9,17 +9,22 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
-  const { isAuthenticated, checkAuth } = useAuthStore();
-  const [loading, setLoading] = useState(true);
+  const { isAuthenticated, checkAuth, hasChecked } = useAuthStore();
+  const [loading, setLoading] = useState(!hasChecked);
 
   useEffect(() => {
-    const verifyAuth = async () => {
-      await checkAuth();
+    // Only check auth if we haven't checked yet
+    if (!hasChecked) {
+      const verifyAuth = async () => {
+        await checkAuth();
+        setLoading(false);
+      };
+      
+      verifyAuth();
+    } else {
       setLoading(false);
-    };
-    
-    verifyAuth();
-  }, [checkAuth]);
+    }
+  }, [checkAuth, hasChecked]);
 
   if (loading) {
     return (

@@ -27,6 +27,13 @@
   - CORS
   - Helmet
   - Express Rate Limit
+  - CSRF Protection (csrf-csrf)
+  - JWT Authentication (jsonwebtoken)
+  - Bcrypt for password hashing
+  - Input Validation (Zod)
+- **Database Encryption**: SQLCipher (when enabled)
+- **Backup System**: Cron-based scheduling with archiver
+- **Data Export**: GDPR compliance with multiple formats
 
 ### Development Tools
 - **TypeScript**: v5.3.3
@@ -71,8 +78,12 @@
 {
   "@anthropic-ai/sdk": "^0.39.0",
   "@google/generative-ai": "^0.1.3",
+  "archiver": "^7.0.1",
+  "bcryptjs": "^2.4.3",
   "body-parser": "^1.20.2",
   "cors": "^2.8.5",
+  "cron": "^3.1.7",
+  "csrf-csrf": "^3.0.3",
   "date-fns": "^3.3.1",
   "date-fns-tz": "^3.2.0",
   "dotenv": "^16.4.1",
@@ -81,6 +92,7 @@
   "firebase-admin": "^13.2.0",
   "helmet": "^7.1.0",
   "joi": "^17.12.0",
+  "jsonwebtoken": "^9.0.2",
   "morgan": "^1.10.0",
   "openai": "^4.24.0",
   "sqlite3": "^5.1.7",
@@ -104,13 +116,21 @@ OPENAI_API_KEY=your_openai_key
 ANTHROPIC_API_KEY=your_anthropic_key
 GOOGLE_AI_API_KEY=your_google_ai_key
 
+# Security Keys (REQUIRED for production)
+JWT_SECRET=generate_with_openssl_rand_base64_32
+CSRF_SECRET=generate_with_openssl_rand_base64_32
+
 # Server Configuration
 PORT=3001
 NODE_ENV=development|production
 ```
 
-### Optional
+### Optional but Recommended
 ```bash
+# Database Encryption (HIGHLY RECOMMENDED)
+DATABASE_ENCRYPTION_KEY=generate_with_openssl_rand_base64_32
+USE_ENCRYPTED_DB=true
+
 # Database (defaults to SQLite)
 USE_FIREBASE=false
 
@@ -119,24 +139,32 @@ FIREBASE_PROJECT_ID=your_project_id
 FIREBASE_CLIENT_EMAIL=your_client_email
 FIREBASE_PRIVATE_KEY=your_private_key
 
-# Security (recommended for production)
-SESSION_SECRET=your_session_secret
-ENCRYPTION_KEY=your_encryption_key  # NOT IMPLEMENTED
+# JWT Configuration
+JWT_EXPIRES_IN=24h
 
 # Frontend URL (for CORS)
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:5173
 
 # Rate Limiting
 RATE_LIMIT_REQUESTS=100
 RATE_LIMIT_WINDOW=900000  # 15 minutes
+AI_RATE_LIMIT_REQUESTS=20
+AI_RATE_LIMIT_WINDOW=900000  # 15 minutes
 
 # AI Configuration
-DEFAULT_AI_MODEL=gpt-4
+DEFAULT_AI_MODEL=gpt-4o
 MAX_TOKENS=16384
 AI_TEMPERATURE=0.7
+ENABLE_AUTO_LEARNING=true
 
 # Timezone
 DEFAULT_TIMEZONE=UTC
+
+# Backup Configuration
+AUTO_BACKUP=true
+BACKUP_INTERVAL=daily
+BACKUP_RETENTION_DAYS=30
+BACKUP_PATH=./backups
 ```
 
 ## System Requirements
@@ -159,7 +187,8 @@ DEFAULT_TIMEZONE=UTC
 - Zero configuration database
 - Embedded, no separate server needed
 - Good for single-user applications
-- **WARNING**: Currently stores all data in plaintext
+- Supports encryption via SQLCipher when DATABASE_ENCRYPTION_KEY is set
+- Automatic backups with compression
 
 ### Why TypeScript?
 - Type safety for therapy data structures
@@ -173,16 +202,21 @@ DEFAULT_TIMEZONE=UTC
 - No boilerplate
 - Good performance
 
-## Security Considerations
+## Security Implementation
 
-⚠️ **CRITICAL SECURITY GAPS**:
-- No database encryption (all data in plaintext)
-- No authentication system
-- No CSRF protection
-- SQL injection vulnerabilities
-- Sensitive data in logs
+✅ **Security Features Implemented**:
+- Database encryption with SQLCipher (AES-256)
+- JWT authentication with bcrypt password hashing
+- CSRF protection (double-submit cookies)
+- SQL injection protection (field whitelisting)
+- Sensitive data redaction in logs
+- Input validation with Zod schemas
+- Request size limits (1MB)
+- Rate limiting for API and AI endpoints
+- Automatic encrypted backups
+- GDPR-compliant data export/deletion
 
-This application is for DEVELOPMENT ONLY until these issues are resolved.
+This is an open source hobby project with security best practices implemented for personal use.
 
 ## Development Scripts
 
@@ -214,14 +248,21 @@ npm run test         # Run Jest tests
 
 ## Deployment Notes
 
-The application is designed to run locally. For production deployment:
+The application is ready for personal deployment:
 
-1. Implement database encryption
-2. Add authentication system
-3. Configure HTTPS
-4. Set up proper logging
-5. Implement backup system
-6. Add monitoring and alerts
+1. ✅ Database encryption (set DATABASE_ENCRYPTION_KEY)
+2. ✅ Authentication system (JWT-based)
+3. ✅ HTTPS ready (use reverse proxy like nginx)
+4. ✅ Production logging (Winston with PII redaction)
+5. ✅ Backup system (automatic + manual)
+6. ✅ Error tracking hooks (add monitoring service if desired)
+
+For production use:
+- Generate strong random keys for JWT_SECRET, CSRF_SECRET, and DATABASE_ENCRYPTION_KEY
+- Use a reverse proxy (nginx) for HTTPS
+- Configure backup retention policies
+- Review rate limiting settings
+- Consider adding monitoring (optional)
 
 ## Version Control
 

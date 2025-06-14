@@ -149,7 +149,7 @@ export default function Profile() {
   useEffect(() => {
     console.log('useEffect - profileResponse:', profileResponse);
     
-    if (profileResponse) {
+    if (profileResponse && !formData.name) { // Only set initial data once
       // Parse JSON fields if they're strings
       const profileData = profileResponse;
       console.log('Setting form data with profileData:', profileData);
@@ -159,30 +159,16 @@ export default function Profile() {
       
       setFormData({
         name: profileData.name || '',
-        demographics: typeof profileData.demographics === 'string' 
-          ? JSON.parse(profileData.demographics) 
-          : profileData.demographics || { age: '', gender: '' },
-        spirituality: typeof profileData.spirituality === 'string'
-          ? JSON.parse(profileData.spirituality)
-          : profileData.spirituality || { beliefs: '', importance: '' },
-        therapy_goals: typeof profileData.therapy_goals === 'string'
-          ? JSON.parse(profileData.therapy_goals)
-          : profileData.therapy_goals || { primary_goal: '', secondary_goals: '' },
-        preferences: typeof profileData.preferences === 'string'
-          ? JSON.parse(profileData.preferences)
-          : profileData.preferences || { communication_style: '', approach: '', ai_model: '' },
-        health: typeof profileData.health === 'string'
-          ? JSON.parse(profileData.health)
-          : profileData.health || { physical_conditions: '', medications: '' },
-        mental_health_screening: typeof profileData.mental_health_screening === 'string'
-          ? JSON.parse(profileData.mental_health_screening)
-          : profileData.mental_health_screening || { previous_therapy: '', current_challenges: '' },
-        sensitive_topics: typeof profileData.sensitive_topics === 'string'
-          ? JSON.parse(profileData.sensitive_topics)
-          : profileData.sensitive_topics || { avoid_topics: '' },
+        demographics: profileData.demographics || { age: '', gender: '' },
+        spirituality: profileData.spirituality || { beliefs: '', importance: '' },
+        therapy_goals: profileData.therapy_goals || { primary_goal: '', secondary_goals: '' },
+        preferences: profileData.preferences || { communication_style: '', approach: '', ai_model: '' },
+        health: profileData.health || { physical_conditions: '', medications: '' },
+        mental_health_screening: profileData.mental_health_screening || { previous_therapy: '', current_challenges: '' },
+        sensitive_topics: profileData.sensitive_topics || { avoid_topics: '' },
       });
     }
-  }, [profileResponse]);
+  }, [profileResponse, formData.name]); // Add formData.name to prevent overwriting during edits
 
   // Update brain mutation
   const updateBrainMutation = useMutation({
@@ -201,7 +187,7 @@ export default function Profile() {
     setFormData((prev) => ({
       ...prev,
       [section]: {
-        ...prev[section as keyof typeof prev],
+        ...(prev[section as keyof typeof prev] as any),
         [field]: value,
       },
     }));

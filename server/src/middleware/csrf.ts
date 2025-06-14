@@ -3,9 +3,17 @@ import { doubleCsrf } from 'csrf-csrf';
 import { logger } from '../utils/logger';
 
 // Configure CSRF protection
-const { invalidCsrfTokenError, generateToken, validateRequest, doubleCsrfProtection } = doubleCsrf({
+const csrfInstance = doubleCsrf({
   getSecret: () => process.env.CSRF_SECRET || 'default-csrf-secret-change-in-production',
-  cookieName: '__Host-psifi.x-csrf-token',
+  getSessionIdentifier: (req: any) => {
+    // Use JWT user ID if available for better stability
+    if (req.user && req.user.id) {
+      return `user-${req.user.id}`;
+    }
+    // Fall back to IP address
+    return req.ip || 'anonymous';
+  },
+  cookieName: process.env.NODE_ENV === 'production' ? '__Host-psifi.x-csrf-token' : 'x-csrf-token',
   cookieOptions: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -14,18 +22,14 @@ const { invalidCsrfTokenError, generateToken, validateRequest, doubleCsrfProtect
   },
   size: 64,
   ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
-  getTokenFromRequest: (req) => req.headers['x-csrf-token'] as string,
+  getCsrfTokenFromRequest: (req: any) => req.headers['x-csrf-token'] as string,
 });
+
+const { invalidCsrfTokenError, doubleCsrfProtection } = csrfInstance;
+const generateToken = csrfInstance.generateCsrfToken;
 
 // Middleware to generate and attach CSRF token
 export const csrfProtection = doubleCsrfProtection;
-
-// Middleware to generate token for client
-export const generateCsrfToken = (req: Request, res: Response, next: NextFunction) => {
-  const token = generateToken(req, res);
-  res.locals.csrfToken = token;
-  next();
-};
 
 // Error handler for CSRF failures
 export const csrfErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {

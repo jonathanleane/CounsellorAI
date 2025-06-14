@@ -7,6 +7,9 @@ import { logger } from '../../utils/logger';
 export class AIService {
   private providers: Map<AIProvider, any> = new Map();
   private providerInstances: Map<AIProvider, any> = new Map();
+  private providerAvailabilityCache: Map<AIProvider, boolean> = new Map();
+  private availabilityCacheExpiry: number = 0;
+  private readonly CACHE_DURATION_MS = 10 * 60 * 1000; // 10 minutes
   private currentProvider: AIProvider;
   private currentModel: AIModel;
 
@@ -126,15 +129,39 @@ export class AIService {
     }
   }
 
-  // Check if a provider is available (has valid API key)
+  // Check if a provider is available (has valid API key) with caching
   private isProviderAvailable(provider: AIProvider): boolean {
-    try {
-      // Try to get or create the provider
-      this.getOrCreateProvider(provider);
-      return true;
-    } catch {
-      return false;
+    // Check if cache is still valid
+    const now = Date.now();
+    if (now < this.availabilityCacheExpiry && this.providerAvailabilityCache.has(provider)) {
+      return this.providerAvailabilityCache.get(provider)!;
     }
+    
+    // If cache expired or doesn't exist, check availability
+    let isAvailable = false;
+    switch (provider) {
+      case AIProvider.OpenAI:
+        isAvailable = !!process.env.OPENAI_API_KEY;
+        break;
+      case AIProvider.Anthropic:
+        isAvailable = !!process.env.ANTHROPIC_API_KEY;
+        break;
+      case AIProvider.Google:
+        isAvailable = !!process.env.GOOGLE_AI_API_KEY;
+        break;
+      default:
+        isAvailable = false;
+    }
+    
+    // Update cache
+    this.providerAvailabilityCache.set(provider, isAvailable);
+    
+    // Update cache expiry time if this is the first cache entry
+    if (this.availabilityCacheExpiry <= now) {
+      this.availabilityCacheExpiry = now + this.CACHE_DURATION_MS;
+    }
+    
+    return isAvailable;
   }
 
   // Get available models

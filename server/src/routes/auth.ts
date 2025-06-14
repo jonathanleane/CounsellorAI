@@ -6,6 +6,14 @@ import { csrfProtection } from '../middleware/csrf';
 import { logger } from '../utils/logger';
 import { redactSensitiveData } from '../utils/redactSensitiveData';
 
+// Define AuthRequest interface
+interface AuthRequest extends Request {
+  user?: {
+    userId: number;
+    username: string;
+  };
+}
+
 const router = Router();
 
 // Validation schemas
@@ -24,8 +32,8 @@ const changePasswordSchema = z.object({
   newPassword: z.string().min(8).max(100)
 });
 
-// Register new user
-router.post('/register', csrfProtection, async (req: Request, res: Response) => {
+// Register new user (no CSRF protection needed for registration)
+router.post('/register', async (req: Request, res: Response): Promise<Response> => {
   try {
     const { username, password } = registerSchema.parse(req.body);
 
@@ -33,7 +41,7 @@ router.post('/register', csrfProtection, async (req: Request, res: Response) => 
     
     logger.info('User registered:', redactSensitiveData({ username }));
     
-    res.status(201).json({
+    return res.status(201).json({
       message: 'User created successfully',
       user: {
         id: user.id,
@@ -50,18 +58,19 @@ router.post('/register', csrfProtection, async (req: Request, res: Response) => 
     }
     
     logger.error('Registration error:', error);
-    res.status(500).json({ error: 'Failed to create user' });
+    return res.status(500).json({ error: 'Failed to create user' });
   }
 });
 
-// Login
-router.post('/login', csrfProtection, async (req: Request, res: Response) => {
+// Login (no CSRF protection needed for login)
+router.post('/login', async (req: Request, res: Response): Promise<Response> => {
   try {
+    logger.info('Login attempt for user:', { username: req.body.username });
     const { username, password } = loginSchema.parse(req.body);
 
     const result = await authService.login(username, password);
     
-    res.json({
+    return res.json({
       token: result.token,
       user: result.user
     });
@@ -75,14 +84,18 @@ router.post('/login', csrfProtection, async (req: Request, res: Response) => {
     }
     
     logger.error('Login error:', error);
-    res.status(500).json({ error: 'Login failed' });
+    return res.status(500).json({ error: 'Login failed' });
   }
 });
 
 // Get current user info
-router.get('/me', authenticateToken, async (req: any, res: Response) => {
+router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    res.json({
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    
+    return res.json({
       user: {
         id: req.user.userId,
         username: req.user.username
@@ -90,18 +103,22 @@ router.get('/me', authenticateToken, async (req: any, res: Response) => {
     });
   } catch (error) {
     logger.error('Error getting user info:', error);
-    res.status(500).json({ error: 'Failed to get user info' });
+    return res.status(500).json({ error: 'Failed to get user info' });
   }
 });
 
 // Change password
-router.post('/change-password', authenticateToken, csrfProtection, async (req: any, res: Response) => {
+router.post('/change-password', authenticateToken, csrfProtection, async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    
     const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
 
     await authService.changePassword(req.user.userId, currentPassword, newPassword);
     
-    res.json({ message: 'Password changed successfully' });
+    return res.json({ message: 'Password changed successfully' });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
@@ -112,13 +129,17 @@ router.post('/change-password', authenticateToken, csrfProtection, async (req: a
     }
     
     logger.error('Password change error:', error);
-    res.status(500).json({ error: 'Failed to change password' });
+    return res.status(500).json({ error: 'Failed to change password' });
   }
 });
 
 // Delete account
-router.delete('/account', authenticateToken, csrfProtection, async (req: any, res: Response) => {
+router.delete('/account', authenticateToken, csrfProtection, async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    
     const { confirmation } = req.body;
     
     if (confirmation !== 'DELETE_MY_ACCOUNT') {
@@ -129,10 +150,10 @@ router.delete('/account', authenticateToken, csrfProtection, async (req: any, re
 
     await authService.deleteUser(req.user.userId);
     
-    res.json({ message: 'Account deleted successfully' });
+    return res.json({ message: 'Account deleted successfully' });
   } catch (error) {
     logger.error('Account deletion error:', error);
-    res.status(500).json({ error: 'Failed to delete account' });
+    return res.status(500).json({ error: 'Failed to delete account' });
   }
 });
 

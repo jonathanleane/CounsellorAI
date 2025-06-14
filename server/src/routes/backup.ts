@@ -50,7 +50,7 @@ router.post('/create', csrfProtection, async (req: Request, res: Response) => {
 });
 
 // Download backup
-router.get('/download/:filename', async (req: Request, res: Response) => {
+router.get('/download/:filename', async (req: Request, res: Response): Promise<any> => {
   try {
     const { filename } = req.params;
     
@@ -82,12 +82,14 @@ router.get('/download/:filename', async (req: Request, res: Response) => {
     
   } catch (error) {
     logger.error('Error downloading backup:', error);
-    res.status(500).json({ error: 'Failed to download backup' });
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Failed to download backup' });
+    }
   }
 });
 
 // Delete backup
-router.delete('/:filename', csrfProtection, async (req: Request, res: Response) => {
+router.delete('/:filename', csrfProtection, async (req: Request, res: Response): Promise<Response> => {
   try {
     const { filename } = req.params;
     
@@ -105,11 +107,11 @@ router.delete('/:filename', csrfProtection, async (req: Request, res: Response) 
     fs.unlinkSync(backupPath);
     logger.info(`Backup deleted: ${filename}`);
     
-    res.json({ message: 'Backup deleted successfully' });
+    return res.json({ message: 'Backup deleted successfully' });
     
   } catch (error) {
     logger.error('Error deleting backup:', error);
-    res.status(500).json({ error: 'Failed to delete backup' });
+    return res.status(500).json({ error: 'Failed to delete backup' });
   }
 });
 

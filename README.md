@@ -91,18 +91,28 @@ You need at least ONE of these (they're free to start):
 2. Click "Download ZIP"
 3. Extract the ZIP file to your Desktop or Documents folder
 
-### Step 4: Set Up Your API Key
+### Step 4: Set Up Your Configuration
 
 1. In the CounsellorAI folder, find the file called `.env.example`
 2. Make a copy and rename it to `.env` (remove the `.example` part)
 3. Open it with any text editor (Notepad is fine)
-4. Add your API key(s):
+4. Add your API key(s) and security keys:
    ```
+   # AI API Keys (at least one required)
    OPENAI_API_KEY=your-openai-key-here
    ANTHROPIC_API_KEY=your-anthropic-key-here
    GOOGLE_API_KEY=your-google-key-here
+   
+   # Security Keys (generate random values)
+   DATABASE_ENCRYPTION_KEY=generate-a-32-character-random-string
+   JWT_SECRET=generate-another-32-character-random-string
+   CSRF_SECRET=generate-another-32-character-random-string
    ```
-5. Save the file
+5. To generate random security keys:
+   - On Mac/Linux: Run `openssl rand -base64 32` in Terminal
+   - On Windows: Use an online generator like [randomkeygen.com](https://randomkeygen.com/)
+   - Or just type 32 random characters (mix of letters, numbers, symbols)
+6. Save the file
 
 ### Step 5: Install and Run
 
@@ -119,9 +129,9 @@ You need at least ONE of these (they're free to start):
    ```bash
    npm run dev
    ```
-5. Open your web browser and go to: `http://localhost:3000`
+5. Open your web browser and go to: `http://localhost:5173`
 
-That's it! You should see the login page. Create an account and start chatting!
+That's it! You should see the login page. Create an account (it's stored locally on your computer) and start chatting!
 
 ---
 
@@ -144,11 +154,15 @@ cd CounsellorAI
 npm install
 
 # Copy environment variables
-cp server/.env.example server/.env
-# Add your API keys to server/.env
+cp .env.example .env
+# Edit .env and add your API keys and generate security keys
 
 # Run development server
 npm run dev
+
+# The app will be available at:
+# Frontend: http://localhost:5173
+# Backend API: http://localhost:3001
 ```
 
 ### Project Structure
@@ -164,14 +178,16 @@ CounsellorAI/
 
 The following security measures have been implemented:
 
-- **Authentication**: JWT-based with bcrypt password hashing
-- **Database Encryption**: SQLCipher with AES-256
+- **Authentication**: JWT-based with bcrypt password hashing (12 rounds)
+- **Database Encryption**: SQLCipher with AES-256 encryption
 - **Input Validation**: Zod schemas on all endpoints
-- **CSRF Protection**: Double-submit cookie pattern
-- **SQL Injection Protection**: Parameterized queries and field whitelisting
-- **XSS Protection**: Input sanitization
-- **Rate Limiting**: Request size limits (1MB)
+- **CSRF Protection**: Double-submit cookie pattern with session binding
+- **SQL Injection Protection**: Parameterized queries throughout
+- **XSS Protection**: Input sanitization and output encoding
+- **Rate Limiting**: AI endpoint limits (20 req/15min) and request size limits (1MB)
 - **Sensitive Data Redaction**: Automatic PII removal from logs
+- **Backup Encryption**: Automatic encrypted backups
+- **GDPR Compliance**: Data export and deletion features
 
 ---
 
@@ -180,11 +196,13 @@ The following security measures have been implemented:
 Contributions are welcome! Please feel free to submit a Pull Request. Some areas that could use help:
 
 - UI/UX improvements
-- Additional AI model integrations
-- Better crisis detection
-- Progress visualization features
+- Additional AI model integrations (Llama, Mistral, etc.)
+- Better crisis detection and intervention
+- Progress visualization and insights
+- Multi-language support
 - Documentation improvements
-- Bug fixes
+- Bug fixes and testing
+- Accessibility features
 
 ### Development Guidelines
 
@@ -195,6 +213,17 @@ Contributions are welcome! Please feel free to submit a Pull Request. Some areas
 5. Test with all AI models
 
 ---
+
+## 📄 Environment Variables
+
+All available configuration options are documented in `.env.example`. Key variables:
+
+- `USE_ENCRYPTED_DB`: Enable database encryption (default: true)
+- `AUTO_BACKUP`: Enable automatic backups (default: true)
+- `BACKUP_INTERVAL`: Backup frequency (hourly/daily/weekly/monthly)
+- `ENABLE_AUTO_LEARNING`: Enable AI learning from conversations (default: true)
+- `DEFAULT_AI_MODEL`: Default AI model to use
+- `JWT_EXPIRES_IN`: Session duration (default: 24h)
 
 ## 📝 License
 

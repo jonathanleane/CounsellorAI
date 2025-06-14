@@ -21,6 +21,21 @@ const envSchema = z.object({
   // Security
   SESSION_SECRET: z.string().optional(),
   ENCRYPTION_KEY: z.string().optional(),
+  DATABASE_ENCRYPTION_KEY: z.string().regex(/^[a-zA-Z0-9+/=]+$/, "Database encryption key must be a valid Base64 string").optional(),
+  JWT_SECRET: z.string().optional(),
+  JWT_EXPIRES_IN: z.string().default('24h'),
+  CSRF_SECRET: z.string().optional(),
+  
+  // Database
+  USE_ENCRYPTED_DB: z.string().transform(val => val === 'true').default('true'),
+  
+  // Backup
+  AUTO_BACKUP: z.string().transform(val => val === 'true').default('true'),
+  BACKUP_INTERVAL: z.string().default('daily'),
+  MAX_BACKUPS: z.string().default('7'),
+  
+  // Learning System
+  ENABLE_AUTO_LEARNING: z.string().transform(val => val === 'true').default('true'),
   
   // Frontend URL (for CORS)
   FRONTEND_URL: z.string().optional(),
@@ -59,6 +74,15 @@ export function validateEnv() {
       }
       if (!env.ENCRYPTION_KEY) {
         console.warn('WARNING: ENCRYPTION_KEY not set in production');
+      }
+      if (env.USE_ENCRYPTED_DB && !env.DATABASE_ENCRYPTION_KEY) {
+        throw new Error('DATABASE_ENCRYPTION_KEY is required when USE_ENCRYPTED_DB is true');
+      }
+      if (!env.JWT_SECRET || env.JWT_SECRET === 'change_this_secret_key') {
+        throw new Error('JWT_SECRET must be set to a secure value in production');
+      }
+      if (!env.CSRF_SECRET || env.CSRF_SECRET === 'default-csrf-secret-change-in-production') {
+        throw new Error('CSRF_SECRET must be set to a secure value in production');
       }
     }
     

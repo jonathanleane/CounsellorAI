@@ -49,7 +49,14 @@ export default function Login() {
       // Redirect to dashboard
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed. Please try again.');
+      const errorMessage = err.response?.data?.error;
+      if (typeof errorMessage === 'string') {
+        setError(errorMessage);
+      } else if (errorMessage?.message) {
+        setError(errorMessage.message);
+      } else {
+        setError('Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

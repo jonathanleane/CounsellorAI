@@ -34,6 +34,9 @@ validateEnv();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy for accurate IP addresses in development
+app.set('trust proxy', true);
+
 // Middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
@@ -68,11 +71,17 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 
-// Rate limiting
-app.use('/api/', rateLimiter);
-
-// CSRF token endpoint (must be before CSRF protection)
+// CSRF token endpoint (must be before rate limiting and CSRF protection)
 app.get('/api/csrf-token', getCsrfToken);
+
+// Rate limiting (exclude csrf-token endpoint)
+app.use('/api/', (req, res, next) => {
+  // Skip rate limiting for CSRF token endpoint
+  if (req.path === '/csrf-token' && req.method === 'GET') {
+    return next();
+  }
+  return rateLimiter(req, res, next);
+});
 
 // Auth routes (no CSRF for login/register)
 app.use('/api/auth', authRoutes);

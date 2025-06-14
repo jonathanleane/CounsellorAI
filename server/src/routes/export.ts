@@ -6,6 +6,7 @@ import { authenticateToken } from '../middleware/auth';
 import path from 'path';
 import fs from 'fs';
 import archiver from 'archiver';
+import { safeParse, safeParseArray, safeParseObject } from '../utils/safeParse';
 
 const router = Router();
 
@@ -34,21 +35,21 @@ router.get('/export/json', async (req, res) => {
     // Parse JSON fields in profile
     const parsedProfile = profile ? {
       ...profile,
-      demographics: profile.demographics ? JSON.parse(profile.demographics) : {},
-      spirituality: profile.spirituality ? JSON.parse(profile.spirituality) : {},
-      therapy_goals: profile.therapy_goals ? JSON.parse(profile.therapy_goals) : {},
-      preferences: profile.preferences ? JSON.parse(profile.preferences) : {},
-      health: profile.health ? JSON.parse(profile.health) : {},
-      mental_health_screening: profile.mental_health_screening ? JSON.parse(profile.mental_health_screening) : {},
-      sensitive_topics: profile.sensitive_topics ? JSON.parse(profile.sensitive_topics) : {},
-      personal_details: profile.personal_details ? JSON.parse(profile.personal_details) : {}
+      demographics: safeParseObject(profile.demographics, 'export.json.demographics'),
+      spirituality: safeParseObject(profile.spirituality, 'export.json.spirituality'),
+      therapy_goals: safeParseObject(profile.therapy_goals, 'export.json.therapy_goals'),
+      preferences: safeParseObject(profile.preferences, 'export.json.preferences'),
+      health: safeParseObject(profile.health, 'export.json.health'),
+      mental_health_screening: safeParseObject(profile.mental_health_screening, 'export.json.mental_health_screening'),
+      sensitive_topics: safeParseObject(profile.sensitive_topics, 'export.json.sensitive_topics'),
+      personal_details: safeParseObject(profile.personal_details, 'export.json.personal_details')
     } : null;
     
     // Parse JSON fields in conversations
     const parsedConversations = conversationsWithMessages.map(conv => ({
       ...conv,
-      identified_patterns: conv.identified_patterns ? JSON.parse(conv.identified_patterns) : [],
-      followup_suggestions: conv.followup_suggestions ? JSON.parse(conv.followup_suggestions) : []
+      identified_patterns: safeParseArray(conv.identified_patterns, 'export.json.patterns'),
+      followup_suggestions: safeParseArray(conv.followup_suggestions, 'export.json.suggestions')
     }));
     
     // Compile all data
@@ -106,13 +107,13 @@ router.get('/export/text', async (req, res) => {
       output += `Name: ${profile.name}\n`;
       
       if (profile.demographics) {
-        const demo = JSON.parse(profile.demographics);
+        const demo = safeParseObject(profile.demographics, 'export.text.demographics');
         output += `Age: ${demo.age || 'Not specified'}\n`;
         output += `Gender: ${demo.gender || 'Not specified'}\n`;
       }
       
       if (profile.therapy_goals) {
-        const goals = JSON.parse(profile.therapy_goals);
+        const goals = safeParseObject(profile.therapy_goals, 'export.text.therapy_goals');
         output += `\nTherapy Goals:\n`;
         output += `Primary: ${goals.primary_goal || 'Not specified'}\n`;
         output += `Secondary: ${goals.secondary_goals || 'Not specified'}\n`;
@@ -181,14 +182,14 @@ router.get('/export/archive', async (req, res) => {
     if (profile) {
       const parsedProfile = {
         ...profile,
-        demographics: profile.demographics ? JSON.parse(profile.demographics) : {},
-        spirituality: profile.spirituality ? JSON.parse(profile.spirituality) : {},
-        therapy_goals: profile.therapy_goals ? JSON.parse(profile.therapy_goals) : {},
-        preferences: profile.preferences ? JSON.parse(profile.preferences) : {},
-        health: profile.health ? JSON.parse(profile.health) : {},
-        mental_health_screening: profile.mental_health_screening ? JSON.parse(profile.mental_health_screening) : {},
-        sensitive_topics: profile.sensitive_topics ? JSON.parse(profile.sensitive_topics) : {},
-        personal_details: profile.personal_details ? JSON.parse(profile.personal_details) : {}
+        demographics: safeParseObject(profile.demographics, 'export.archive.demographics'),
+        spirituality: safeParseObject(profile.spirituality, 'export.archive.spirituality'),
+        therapy_goals: safeParseObject(profile.therapy_goals, 'export.archive.therapy_goals'),
+        preferences: safeParseObject(profile.preferences, 'export.archive.preferences'),
+        health: safeParseObject(profile.health, 'export.archive.health'),
+        mental_health_screening: safeParseObject(profile.mental_health_screening, 'export.archive.mental_health_screening'),
+        sensitive_topics: safeParseObject(profile.sensitive_topics, 'export.archive.sensitive_topics'),
+        personal_details: safeParseObject(profile.personal_details, 'export.archive.personal_details')
       };
       
       archive.append(JSON.stringify(parsedProfile, null, 2), { name: 'profile.json' });
@@ -200,8 +201,8 @@ router.get('/export/archive', async (req, res) => {
       const conversationData = {
         ...conv,
         messages,
-        identified_patterns: conv.identified_patterns ? JSON.parse(conv.identified_patterns) : [],
-        followup_suggestions: conv.followup_suggestions ? JSON.parse(conv.followup_suggestions) : []
+        identified_patterns: safeParseArray(conv.identified_patterns, 'export.archive.patterns'),
+        followup_suggestions: safeParseArray(conv.followup_suggestions, 'export.archive.suggestions')
       };
       
       const filename = `conversations/session_${conv.id}_${conv.timestamp?.split('T')[0] || 'unknown'}.json`;
@@ -277,7 +278,7 @@ router.delete('/export/delete-all', csrfProtection, async (req, res) => {
     
     logger.warn('All user data deleted per user request');
     
-    res.json({ 
+    return res.json({ 
       success: true, 
       message: 'All your data has been permanently deleted',
       deletedConversations: conversations.length
@@ -285,7 +286,7 @@ router.delete('/export/delete-all', csrfProtection, async (req, res) => {
     
   } catch (error) {
     logger.error('Error deleting user data:', error);
-    res.status(500).json({ error: 'Failed to delete data' });
+    return res.status(500).json({ error: 'Failed to delete data' });
   }
 });
 

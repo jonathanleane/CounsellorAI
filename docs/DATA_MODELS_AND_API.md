@@ -1,13 +1,20 @@
 # Data Models and API Documentation
 
-## ⚠️ SECURITY WARNING
+## 🔒 Security Status
 
-**Critical Security Issues:**
-- ❌ **NO AUTHENTICATION**: No login system or access control
-- ❌ **NO DATABASE ENCRYPTION**: All data stored in plaintext SQLite
-- ❌ **JSON STRING STORAGE**: Structured data stored as strings (parse errors possible)
-- ✅ **Input Validation**: Now using Zod schemas (recently added)
-- ✅ **CSRF Protection**: Double-submit cookie pattern implemented
+**Implemented Security Features:**
+- ✅ **Authentication**: JWT-based authentication with bcrypt
+- ✅ **Database Encryption**: SQLCipher with AES-256 encryption
+- ✅ **Input Validation**: Zod schemas on all endpoints
+- ✅ **CSRF Protection**: Double-submit cookie pattern
+- ✅ **SQL Injection Protection**: Field whitelisting
+- ✅ **Request Size Limits**: 1MB limit prevents DoS
+- ✅ **Sensitive Data Redaction**: PII removed from logs
+- ✅ **API Versioning**: Future-proof /api/v1 endpoints
+
+**Design Considerations:**
+- **JSON String Storage**: Some complex data stored as JSON strings for flexibility
+- **Single Profile System**: Designed for personal use
 
 ## Data Models
 
@@ -111,27 +118,27 @@ Individual messages within a conversation:
 #### GET /api/profile
 Get the current user profile
 - **Response**: Profile object or 404
-- **Security**: ❌ No authentication required
-- **Validation**: None
+- **Security**: ✅ JWT authentication required
+- **Validation**: None needed (read-only)
 
 #### POST /api/profile
 Create or update user profile
 - **Body**: Profile data (all fields)
 - **Response**: Saved profile object
-- **Security**: ✅ CSRF protection, ❌ No authentication
+- **Security**: ✅ JWT authentication, ✅ CSRF protection
 - **Validation**: ✅ Full Zod schema validation
 
 #### GET /api/profile/brain
 Get therapist's brain data (personal_details)
 - **Response**: `{ personalDetails: Object }`
-- **Security**: ❌ No authentication required
+- **Security**: ✅ JWT authentication required
 - **Note**: Returns parsed JSON from SQLite string storage
 
 #### POST /api/profile/brain
 Update a specific field in therapist's brain
 - **Body**: `{ category: String, field: String, value: Any }`
 - **Response**: `{ success: true, personalDetails: Object }`
-- **Security**: ✅ CSRF protection, ❌ No authentication
+- **Security**: ✅ JWT authentication, ✅ CSRF protection
 - **Validation**: ✅ Zod schema for request body
 
 ### Session Endpoints
@@ -139,39 +146,39 @@ Update a specific field in therapist's brain
 #### GET /api/sessions
 Get all sessions
 - **Response**: Array of conversation objects
-- **Security**: ❌ No authentication required
+- **Security**: ✅ JWT authentication required
 - **Note**: Patterns/suggestions parsed from JSON strings
 
 #### GET /api/sessions/recent
 Get recent sessions
 - **Query**: `limit` (default: 5)
 - **Response**: Array of recent conversations
-- **Security**: ❌ No authentication required
+- **Security**: ✅ JWT authentication required
 
 #### GET /api/sessions/:id
 Get a specific session with messages
 - **Response**: Conversation object with messages array
-- **Security**: ❌ No authentication required
+- **Security**: ✅ JWT authentication required
 - **Validation**: Basic ID format check
 
 #### POST /api/sessions
 Create a new session
 - **Body**: `{ session_type: String, initial_mood: Number, model: String }`
 - **Response**: New conversation object with initial AI greeting
-- **Security**: ✅ CSRF protection, ❌ No authentication
+- **Security**: ✅ JWT authentication, ✅ CSRF protection
 - **Validation**: ✅ Zod schema validation
 
 #### DELETE /api/sessions/:id
 Delete a session
 - **Response**: `{ message: 'Conversation deleted successfully' }`
-- **Security**: ✅ CSRF protection, ❌ No authentication
+- **Security**: ✅ JWT authentication, ✅ CSRF protection
 - **Warning**: No confirmation required
 
 #### POST /api/sessions/:id/messages
 Add a message to a session
 - **Body**: `{ content: String }`
 - **Response**: Updated conversation with AI response
-- **Security**: ✅ CSRF protection, ❌ No authentication
+- **Security**: ✅ JWT authentication, ✅ CSRF protection
 - **Validation**: ✅ Zod schema, ✅ 1MB size limit
 - **Features**: Automatic learning extraction for intake sessions
 
@@ -179,7 +186,7 @@ Add a message to a session
 End a session (triggers async summary generation)
 - **Body**: `{ duration: Number }`
 - **Response**: Success acknowledgment
-- **Security**: ✅ CSRF protection, ❌ No authentication
+- **Security**: ✅ JWT authentication, ✅ CSRF protection
 - **Validation**: ✅ Zod schema validation
 - **Side Effects**: Triggers AI summary, updates intake_completed
 
@@ -187,7 +194,7 @@ End a session (triggers async summary generation)
 
 ### SQLite Tables (Primary Storage)
 
-⚠️ **WARNING: NO ENCRYPTION - All data stored in plaintext**
+✅ **Database encryption enabled when DATABASE_ENCRYPTION_KEY is set**
 
 ```sql
 -- profiles table
@@ -271,21 +278,41 @@ conversations/
 ## Security Status
 
 ### ✅ Implemented
-1. **API Key Protection**: Stored in environment variables
-2. **Input Validation**: Zod schemas on all POST endpoints
-3. **CSRF Protection**: Double-submit cookie pattern
-4. **Request Size Limits**: 1MB limit to prevent DoS
-5. **Field Whitelisting**: SQL injection protection for updateProfile
+1. **Authentication**: JWT-based with bcrypt password hashing
+2. **Database Encryption**: SQLCipher with AES-256
+3. **API Key Protection**: Stored in environment variables
+4. **Input Validation**: Zod schemas on all endpoints
+5. **CSRF Protection**: Double-submit cookie pattern
+6. **Request Size Limits**: 1MB limit to prevent DoS
+7. **SQL Injection Protection**: Field whitelisting and parameterized queries
+8. **Data Export**: Full GDPR compliance with export/delete
+9. **Backup System**: Automatic encrypted backups
+10. **API Versioning**: /api/v1 endpoints
 
-### ❌ NOT Implemented (CRITICAL)
-1. **Authentication**: No login system or access control
-2. **Database Encryption**: All data stored in plaintext
-3. **Session Management**: No session timeouts
-4. **Audit Logging**: No access logs
-5. **Data Export**: No GDPR compliance features
+### Future Enhancements
+1. **Session Timeouts**: Beyond JWT expiry
+2. **Audit Logging**: Detailed access logs
+3. **Two-Factor Authentication**: Additional security layer
+4. **Password Reset**: Email-based recovery
 
-### ⚠️ Known Vulnerabilities
-1. **JSON String Storage**: Risk of parse errors and injection
-2. **No Rate Limiting**: Beyond basic request size
-3. **No API Versioning**: Breaking changes affect all clients
-4. **Single User Design**: Cannot scale to multi-user
+### Design Considerations
+1. **JSON String Storage**: Flexible data structure for evolving schemas
+2. **Rate Limiting**: Configurable limits (100 req/15min general, 20 req/15min AI)
+3. **API Versioning**: Implemented with /api/v1 prefix
+4. **Single User Focus**: Optimized for personal use
+
+### Additional Endpoints
+
+#### Authentication Endpoints
+- **POST /api/auth/register**: Create new account
+- **POST /api/auth/login**: Login with credentials
+- **POST /api/auth/logout**: Logout and invalidate token
+- **POST /api/auth/change-password**: Update password
+
+#### Export Endpoints
+- **GET /api/export/all**: Export all data (JSON/Text/ZIP)
+- **DELETE /api/export/delete-account**: Delete all user data
+
+#### Backup Endpoints  
+- **POST /api/backup/create**: Create manual backup
+- **GET /api/backup/list**: List available backups

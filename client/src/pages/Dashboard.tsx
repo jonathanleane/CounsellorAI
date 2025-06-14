@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -24,11 +25,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { sessionsApi } from '@/services/api';
 import { useProfileStore } from '@/stores/profileStore';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const profile = useProfileStore((state) => state.profile);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   
   // Ensure profile is loaded
   if (!profile) {
@@ -65,10 +69,7 @@ export default function Dashboard() {
   const startNewSession = () => {
     let modelPreference;
     if (profile?.preferences) {
-      const prefs = typeof profile.preferences === 'string' 
-        ? JSON.parse(profile.preferences) 
-        : profile.preferences;
-      modelPreference = prefs.ai_model;
+      modelPreference = profile.preferences.ai_model;
     }
     
     createSessionMutation.mutate({
@@ -197,7 +198,7 @@ export default function Dashboard() {
         </Paper>
       ) : (
         <Grid container spacing={2}>
-          {recentSessions?.data?.map((session) => (
+          {recentSessions?.data?.map((session: any) => (
             <Grid item xs={12} key={session.id}>
               <Paper
                 sx={{
@@ -242,9 +243,8 @@ export default function Dashboard() {
                   <IconButton
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (window.confirm('Are you sure you want to delete this session?')) {
-                        deleteSessionMutation.mutate(session.id);
-                      }
+                      setSessionToDelete(session.id);
+                      setDeleteDialogOpen(true);
                     }}
                     disabled={deleteSessionMutation.isPending}
                   >
@@ -280,13 +280,7 @@ export default function Dashboard() {
                 Primary Goal
               </Typography>
               <Typography variant="body1">
-                {(() => {
-                  if (!profile?.therapy_goals) return 'Not set';
-                  const goals = typeof profile.therapy_goals === 'string' 
-                    ? JSON.parse(profile.therapy_goals) 
-                    : profile.therapy_goals;
-                  return goals.primary_goal || 'Not set';
-                })()}
+                {profile?.therapy_goals?.primary_goal || 'Not set'}
               </Typography>
             </Paper>
           </Grid>
@@ -296,18 +290,32 @@ export default function Dashboard() {
                 Preferred Style
               </Typography>
               <Typography variant="body1">
-                {(() => {
-                  if (!profile?.preferences) return 'Not set';
-                  const prefs = typeof profile.preferences === 'string' 
-                    ? JSON.parse(profile.preferences) 
-                    : profile.preferences;
-                  return prefs.communication_style || 'Not set';
-                })()}
+                {profile?.preferences?.communication_style || 'Not set'}
               </Typography>
             </Paper>
           </Grid>
         </Grid>
       </Box>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title="Delete Session"
+        message="Are you sure you want to delete this session? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={() => {
+          if (sessionToDelete) {
+            deleteSessionMutation.mutate(sessionToDelete);
+            setDeleteDialogOpen(false);
+            setSessionToDelete(null);
+          }
+        }}
+        onCancel={() => {
+          setDeleteDialogOpen(false);
+          setSessionToDelete(null);
+        }}
+      />
     </Container>
   );
 }

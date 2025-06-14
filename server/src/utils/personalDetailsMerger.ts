@@ -12,7 +12,21 @@ export function mergePersonalDetails(
   existing: PersonalDetails,
   newDetails: PersonalDetails
 ): { merged: PersonalDetails; changes: string[] } {
-  const merged = JSON.parse(JSON.stringify(existing)) as PersonalDetails; // Deep clone
+  // Deep clone using structured cloning when available, fallback to JSON method
+  let merged: PersonalDetails;
+  try {
+    // Try structured cloning if available (Node.js 17+)
+    if (typeof structuredClone === 'function') {
+      merged = structuredClone(existing);
+    } else {
+      // Fallback to JSON method
+      merged = JSON.parse(JSON.stringify(existing));
+    }
+  } catch (error) {
+    logger.error('Failed to deep clone existing details:', error);
+    // Create a new object as fallback
+    merged = {} as PersonalDetails;
+  }
   const changes: string[] = [];
 
   // Define categories that should be merged
@@ -120,16 +134,30 @@ function truncateValue(value: any): string {
  * Filter out sensitive information before storing
  */
 export function sanitizePersonalDetails(details: PersonalDetails): PersonalDetails {
-  const sanitized = JSON.parse(JSON.stringify(details));
+  let sanitized: PersonalDetails;
+  try {
+    // Try structured cloning if available (Node.js 17+)
+    if (typeof structuredClone === 'function') {
+      sanitized = structuredClone(details);
+    } else {
+      // Fallback to JSON method
+      sanitized = JSON.parse(JSON.stringify(details));
+    }
+  } catch (error) {
+    logger.error('Failed to clone details for sanitization:', error);
+    // Return empty object if cloning fails
+    return {} as PersonalDetails;
+  }
   
   // Remove any fields that might contain sensitive data
   const sensitiveFields = ['password', 'ssn', 'credit_card', 'bank_account'];
   
-  for (const category of Object.keys(sanitized)) {
-    if (sanitized[category] && typeof sanitized[category] === 'object') {
-      for (const field of Object.keys(sanitized[category])) {
+  for (const category of Object.keys(sanitized) as Array<keyof PersonalDetails>) {
+    const categoryData = sanitized[category];
+    if (categoryData && typeof categoryData === 'object') {
+      for (const field of Object.keys(categoryData)) {
         if (sensitiveFields.some(sensitive => field.toLowerCase().includes(sensitive))) {
-          delete sanitized[category][field];
+          delete categoryData[field];
         }
       }
     }

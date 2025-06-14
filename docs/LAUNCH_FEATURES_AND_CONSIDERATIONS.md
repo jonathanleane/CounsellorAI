@@ -2,11 +2,11 @@
 
 ## Critical Missing Features for Launch
 
-### 1. Data Portability & Backup
-- **Export functionality**: JSON, PDF, and Markdown formats
-- **Automated backups**: Local scheduled backups
-- **Import functionality**: Restore from backups
-- **Session archiving**: Compress old sessions
+### 1. Data Portability & Backup (✅ Partially Complete)
+- ✅ **Export functionality**: JSON, Text, and ZIP formats implemented
+- ✅ **Automated backups**: Local scheduled backups with cron
+- **Import functionality**: Restore from backups (manual process documented)
+- **Session archiving**: Compress old sessions (future enhancement)
 
 ### 2. Crisis Management
 - **Emergency resources page**: Hotlines by country/region
@@ -22,14 +22,16 @@
 - **Model comparison**: Help users choose the right model
 - ✅ **Automatic fallback**: Switch models on failure
 
-### 4. Privacy & Security Enhancements (✅ Partially Complete)
-- **Local encryption**: Encrypt SQLite database at rest (not implemented)
-- **Session passwords**: Optional password protection (not implemented)
-- **Auto-logout**: Configurable timeout (not implemented)
-- **Data retention**: Automatic old session cleanup (not implemented)
+### 4. Privacy & Security Enhancements (✅ Mostly Complete)
+- ✅ **Local encryption**: SQLCipher database encryption implemented
+- ✅ **Authentication**: JWT-based auth with secure passwords
+- **Auto-logout**: Configurable timeout (JWT expiry implemented)
+- **Data retention**: Automatic old session cleanup (future enhancement)
 - ✅ **PII Redaction**: Automatic redaction in logs
 - ✅ **Prompt Injection Protection**: Input sanitization
 - ✅ **Secure Logging**: Winston with PII filtering
+- ✅ **CSRF Protection**: Double-submit cookie pattern
+- ✅ **SQL Injection Protection**: Field whitelisting
 
 ### 5. User Experience Improvements
 - **Search functionality**: Search through conversation history
@@ -79,17 +81,20 @@
 ## Launch Checklist
 
 ### Must Have
-- [✅] Data export (JSON implemented)
-- [ ] Basic backup/restore
+- [✅] Data export (JSON/Text/ZIP implemented)
+- [✅] Basic backup/restore (automatic backups implemented)
 - [ ] Crisis resources page
 - [ ] Offline mode (basic)
 - [ ] Search in history
 - [ ] Keyboard shortcuts
-- [ ] CONTRIBUTING.md
+- [✅] CONTRIBUTING.md
 - [ ] LICENSE file
 - [ ] Basic user guide
-- [✅] Security features (PII redaction, injection protection)
+- [✅] Security features (auth, encryption, CSRF, validation)
 - [✅] Multi-model AI support
+- [✅] Authentication system
+- [✅] Database encryption
+- [✅] GDPR compliance
 
 ### Nice to Have
 - [ ] Session templates
@@ -141,14 +146,16 @@
 ### API Key Security (✅ Implemented)
 - ✅ Never log API keys (redacted in logs)
 - ✅ Validate key format on startup
-- ✅ Rate limit API calls (100 req/15min)
-- Monitor for abuse (needs implementation)
+- ✅ Rate limit API calls (100 req/15min general, 20 req/15min AI)
+- Monitor for abuse (manual review via logs)
 
-### Data Security (✅ Partially Complete)
-- Encrypt sensitive fields (database encryption pending)
+### Data Security (✅ Complete)
+- ✅ Database encryption with SQLCipher
 - ✅ Sanitize all inputs (injection protection)
 - ✅ Use HTTPS only (in production)
-- Regular security audits (process needed)
+- ✅ Authentication system with JWT
+- ✅ Backup encryption
+- Regular security audits (open source community)
 
 ## Launch Communication
 
