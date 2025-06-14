@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+// Check if we should use versioned API
+const useVersionedApi = import.meta.env.VITE_USE_API_V1 !== 'false';
+const apiVersion = useVersionedApi ? '/v1' : '';
+const API_BASE = import.meta.env.VITE_API_URL || `/api${apiVersion}`;
 
 // Create axios instance with defaults
 const api = axios.create({
@@ -11,13 +14,19 @@ const api = axios.create({
   withCredentials: true, // Important for CSRF cookies
 });
 
+// Log API version in development
+if (import.meta.env.DEV) {
+  console.log(`Using API: ${API_BASE}`);
+}
+
 // Store CSRF token
 let csrfToken: string | null = null;
 
 // Function to fetch CSRF token
 async function fetchCsrfToken() {
   try {
-    const response = await axios.get(`${API_BASE}/csrf-token`, { withCredentials: true });
+    // CSRF token endpoint is always at /api/csrf-token (not versioned)
+    const response = await axios.get('/api/csrf-token', { withCredentials: true });
     csrfToken = response.data.csrfToken;
     return csrfToken;
   } catch (error) {

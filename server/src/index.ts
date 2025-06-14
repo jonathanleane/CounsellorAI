@@ -23,6 +23,7 @@ import profileRoutes from './routes/profile';
 import healthRoutes from './routes/health';
 import testRoutes from './routes/test';
 import exportRoutes from './routes/export';
+import v1Routes from './routes/v1';
 
 // Validate environment variables
 validateEnv();
@@ -73,12 +74,35 @@ app.get('/api/csrf-token', getCsrfToken);
 // Apply CSRF protection to all state-changing routes
 app.use('/api/', csrfProtection);
 
-// API Routes
+// API Routes - Version 1 (with /api/v1 prefix)
+app.use('/api/v1', v1Routes);
+
+// Legacy routes (maintain backward compatibility)
+// These will be deprecated in the future
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/test', testRoutes);
 app.use('/api', exportRoutes);  // Export routes at /api/export/*
+
+// API version redirect for root
+app.get('/api', (req, res) => {
+  res.json({
+    message: 'CounsellorAI API',
+    versions: {
+      v1: {
+        status: 'active',
+        base_url: '/api/v1',
+        docs: '/api/v1/version'
+      },
+      legacy: {
+        status: 'deprecated',
+        base_url: '/api',
+        note: 'Will be removed in future versions. Please use /api/v1'
+      }
+    }
+  });
+});
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
