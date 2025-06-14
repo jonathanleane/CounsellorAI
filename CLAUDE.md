@@ -1,33 +1,42 @@
 # Claude Assistant Instructions - CounsellorAI
 
 ## ⚠️ CRITICAL SECURITY WARNING
-**This application is in DEVELOPMENT ONLY status. It has critical security vulnerabilities:**
+**This application is in DEVELOPMENT ONLY status with remaining critical vulnerabilities:**
 - ❌ No database encryption (all therapy data stored in plaintext)
 - ❌ No authentication system (anyone can access all data)
-- ❌ SQL injection vulnerabilities
-- ❌ Sensitive data exposed in logs
-- ❌ No input validation on critical endpoints
+- ❌ No session management (sessions never expire)
+- ❌ No audit logging (no tracking of data access)
 
-**DO NOT USE FOR REAL THERAPY DATA UNTIL SECURITY ISSUES ARE RESOLVED**
+**Recently Fixed (2025-06-13):**
+- ✅ SQL injection protection (field whitelisting)
+- ✅ Sensitive data redaction in logs
+- ✅ Input validation on all endpoints (Zod schemas)
+- ✅ CSRF protection (double-submit cookie)
+- ✅ Request size limits (1MB DoS protection)
+
+**DO NOT USE FOR REAL THERAPY DATA UNTIL REMAINING SECURITY ISSUES ARE RESOLVED**
 
 ## Project Overview
 This is an AI-powered therapy companion application that has been rebuilt from scratch with modern architecture. The application supports multiple AI models (OpenAI GPT-4, Anthropic Claude 3, Google Gemini) and provides a complete therapy session experience with persistent user profiles, session history, and AI-generated insights.
 
 ## 🚨 Current Priority Tasks (See TODO.md for full list)
 
-### Critical Security Fixes (Work on these FIRST):
-1. **Add development warning to README.md**
+### Critical Security Fixes Remaining:
+1. ✅ **Add development warning to README.md** - COMPLETED
 2. **Implement database encryption** (all data currently plaintext!)
 3. **Add authentication system** (no login/security exists)
-4. **Fix SQL injection** in sqlite.ts:207
-5. **Remove sensitive data from logs** (use redactSensitiveData)
-6. **Add Zod validation** to all API endpoints
+4. ✅ **Fix SQL injection** - COMPLETED with field whitelisting
+5. ✅ **Remove sensitive data from logs** - COMPLETED with redaction utility
+6. ✅ **Add Zod validation** - COMPLETED on all API endpoints
 
-### High Priority Bugs:
-- ~~Hardcoded AI model ignoring user preferences~~ ✓ Fixed
-- Memory leak in conversation timer
-- ~~Environment variable mismatch~~ ✓ Already correct (GOOGLE_AI_API_KEY)
-- Race conditions in profile loading
+### Recently Fixed:
+- ✅ Hardcoded AI model - now uses user preferences
+- ✅ Memory leak in conversation timer - cleanup on unmount
+- ✅ CSRF protection - double-submit cookie pattern
+- ✅ Request size limits - 1MB to prevent DoS
+- ✅ Streak calculation - working correctly
+- ✅ Profile data display - fixed double wrapping
+- ✅ AI model dropdown - loads available models
 
 ## Key Project Context
 
@@ -35,18 +44,21 @@ This is an AI-powered therapy companion application that has been rebuilt from s
 - **Frontend**: React 18 with TypeScript, Material-UI 5, Vite
 - **Backend**: Express.js with TypeScript on Node.js 18+
 - **Database**: SQLite (local storage), Firebase support completed
-- **AI Models**: OpenAI GPT-4.5, Anthropic Claude 4, Google Gemini 2.5
+- **AI Models**: OpenAI GPT-4o, Anthropic Claude 3.5 Sonnet, Google Gemini 2.0 Flash
 - **State Management**: Zustand (client), React Query (server state)
 - **Security**: PII redaction in logs, prompt injection protection, input sanitization
 
 ### Security Implementation
-1. **API Keys**: Properly managed via environment variables in `.env`
-2. **Authentication**: Local-first design (no auth needed for personal use)
-3. **Input Validation**: Implemented with Joi/Zod schemas
-4. **Rate Limiting**: API endpoints protected with express-rate-limit
-5. **PII Protection**: Automatic redaction of sensitive data in logs
-6. **Prompt Injection Protection**: Input sanitization and dangerous pattern detection
-7. **Lazy AI Provider Loading**: Providers only initialized when needed, improving security and performance
+1. **API Keys**: ✅ Properly managed via environment variables in `.env`
+2. **Authentication**: ❌ NO AUTH SYSTEM - critical vulnerability
+3. **Input Validation**: ✅ Implemented with Zod schemas on all endpoints
+4. **Rate Limiting**: ✅ Request size limits (1MB) to prevent DoS
+5. **PII Protection**: ✅ Automatic redaction of sensitive data in logs
+6. **Prompt Injection Protection**: ✅ Input sanitization and dangerous pattern detection
+7. **Lazy AI Provider Loading**: ✅ Providers only initialized when needed
+8. **CSRF Protection**: ✅ Double-submit cookie pattern implemented
+9. **SQL Injection**: ✅ Field whitelisting prevents injection attacks
+10. **Database Encryption**: ❌ NO ENCRYPTION - all data in plaintext
 
 ## When Working on This Project
 
@@ -171,11 +183,11 @@ const response = await aiService.generateResponse(
 - **Configuration**: Set ENABLE_AUTO_LEARNING=true in .env to enable
 
 ### Updated AI Models (NEW)
-- **Default Model**: Now uses GPT-4.5 Preview (from GPT-4 Turbo)
-- **Claude 4**: Updated to Claude 4 Opus/Sonnet (latest Anthropic models)
-- **Gemini 2.5**: Updated to Gemini 2.5 Pro/Flash (latest Google models)
-- **Model Enums**: Added new models, reordered to show latest first
-- **Automatic Fallback**: Falls back to GPT-4.5 Preview if other models fail
+- **Default Model**: GPT-4o (OpenAI's latest)
+- **Claude**: Claude 3.5 Sonnet (Anthropic's most capable)
+- **Gemini**: Gemini 2.0 Flash Experimental (Google's fastest)
+- **Model Selection**: Users can change preferred model in preferences
+- **Automatic Fallback**: Falls back to GPT-4o if other models fail
 
 ### Other Recent Updates
 - Firebase configuration check
@@ -197,23 +209,26 @@ const response = await aiService.generateResponse(
 
 ## Known Limitations
 
-1. **Single User**: Designed for local/personal use
-2. **No Database Encryption**: Data stored in plain SQLite (encryption planned)
-3. **No Offline AI**: Requires internet for AI responses
-4. **Limited Export**: Currently only JSON format
-5. **No Voice Support**: Text-only interface
-6. **Limited Crisis Detection**: Basic keyword matching only
+1. **Single User**: Designed for local/personal use (no multi-user support)
+2. **No Database Encryption**: ⚠️ CRITICAL - All data stored in plaintext SQLite
+3. **No Authentication**: ⚠️ CRITICAL - Anyone with access can read all data
+4. **No Offline AI**: Requires internet for AI responses
+5. **Limited Export**: Currently only JSON format (PDF/Markdown planned)
+6. **No Voice Support**: Text-only interface
+7. **Limited Crisis Detection**: Basic keyword matching only
+8. **No Session Timeouts**: Sessions never expire automatically
 
 ## Completed Features ✓
 
-1. ✓ **Security**: API keys in env vars, input validation, rate limiting, PII redaction, prompt injection protection
-2. ✓ **TypeScript**: Full TypeScript implementation
-3. ✓ **Core Features**: Profile, sessions, AI chat, history
-4. ✓ **UI/UX**: Responsive Material-UI design
-5. ✓ **Multi-Model AI**: GPT-4.5, Claude 4, Gemini 2.5 support with lazy loading
+1. ✓ **Security (Partial)**: API keys in env vars, input validation (Zod), CSRF protection, PII redaction, SQL injection protection
+2. ✓ **TypeScript**: Full TypeScript implementation with strict typing
+3. ✓ **Core Features**: Profile, sessions, AI chat, history, automatic learning
+4. ✓ **UI/UX**: Responsive Material-UI design with improved onboarding
+5. ✓ **Multi-Model AI**: GPT-4o, Claude 3.5, Gemini 2.0 support with lazy loading
 6. ✓ **Firebase Support**: Full Firebase integration with migration tools
 7. ✓ **Logging**: Winston logger with automatic PII redaction
 8. ✓ **Session Management**: Auto-greeting, timing precision, summaries
+9. ✓ **Automatic Learning**: AI learns from conversations and updates knowledge base
 
 ## Next Priorities
 

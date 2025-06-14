@@ -8,11 +8,19 @@
 
 ## Recent Security Fixes (Completed)
 
-### ✅ Fixed Issues:
+### ✅ Recently Fixed Issues (2025-06-13):
 1. **Server Crash on Missing API Keys** - Server now starts with any subset of AI providers
-2. **PII in Logs** - Added automatic redaction of sensitive fields in all log outputs
-3. **Prompt Injection** - Added input sanitization and injection detection
-4. **CI/CD Pipeline** - Added GitHub Actions for automated security checks
+2. **Input Validation** - Added Zod validation to ALL API endpoints
+3. **PII in Logs** - Created and applied redaction utility
+4. **SQL Injection** - Fixed with field whitelisting
+5. **CSRF Protection** - Implemented double-submit cookie pattern
+6. **Memory Leaks** - Fixed conversation timer cleanup
+7. **Request Size Limits** - Added 1MB limits to prevent DoS
+
+### ❌ NOT Fixed (Critical):
+1. **Database Encryption** - All therapy data still in plaintext
+2. **Authentication System** - No login/access control
+3. **Session Timeouts** - Sessions never expire
 
 ### ❌ Still Required:
 1. **Database Encryption** - SQLite still stores data in plaintext
@@ -66,7 +74,7 @@ DATABASE_ENCRYPTION_KEY=your-generated-key-here
 ## Additional Security Issues
 
 1. **JSON String Storage**: Structured data is stored as JSON strings instead of proper database fields
-2. **No Input Validation**: Missing Zod/Joi validation on API endpoints
+2. **Partial Input Validation**: Some endpoints have Zod validation, others still vulnerable
 3. **Documentation Conflicts**: SECURITY.md incorrectly claims encryption exists
 
 ## Contact

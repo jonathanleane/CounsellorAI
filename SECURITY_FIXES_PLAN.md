@@ -1,11 +1,14 @@
 # Security Fixes Plan for CounsellorAI
 
-## Critical Issues Identified
+> ⚠️ **STATUS UPDATE (2025-06-13)**: Many of these issues have been addressed, but critical ones remain. See [TODO.md](./TODO.md) for current status.
 
-### 1. **No Encryption at Rest** (CRITICAL)
-- **Current State**: SQLite database stores all therapy data in plaintext
+## Critical Issues Still Outstanding
+
+### 1. **No Encryption at Rest** (CRITICAL - NOT FIXED)
+- **Current State**: SQLite database STILL stores all therapy data in plaintext
 - **Risk**: Anyone with filesystem access can read sensitive mental health data
 - **Location**: `/database/counsellor.db`
+- **Status**: ❌ NOT IMPLEMENTED despite documentation claiming otherwise
 
 ### 2. **JSON String Storage Anti-Pattern** (HIGH)
 - **Current State**: Structured data stored as JSON strings in SQLite

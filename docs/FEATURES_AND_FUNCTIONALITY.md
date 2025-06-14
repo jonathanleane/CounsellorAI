@@ -1,8 +1,12 @@
-# AI Therapist Features and Functionality
+# CounsellorAI Features and Functionality
+
+## ⚠️ Development Status
+
+This document describes both implemented features (✅) and planned features (🔜). The application is currently in development and has critical security vulnerabilities. DO NOT use for real therapy data.
 
 ## Core Features
 
-### 1. User Onboarding
+### 1. User Onboarding ✅
 - **Multi-step questionnaire** collecting:
   - Basic demographics (name, age, gender)
   - Therapy goals (primary and secondary)
@@ -14,7 +18,7 @@
 - **Progress tracking** with visual progress bar
 - **Data persistence** to user profile
 
-### 2. Conversation System
+### 2. Conversation System ✅
 - **Session types**:
   - Intake sessions (first-time users)
   - Standard therapy sessions
@@ -29,7 +33,7 @@
   - Automatic cleanup of empty sessions
   - Session duration tracking
 
-### 3. AI Therapy Logic
+### 3. AI Therapy Logic ✅
 - **Personalized responses** based on:
   - User profile data
   - Previous conversation history
@@ -44,7 +48,7 @@
   - Crisis intervention protocols
   - Goal tracking and progress monitoring
 
-### 4. Dashboard
+### 4. Dashboard ✅
 - **Recent sessions display** (last 5 by default)
 - **Quick actions**:
   - Start new conversation
@@ -53,10 +57,10 @@
   - View Therapist's Brain
 - **Session status indicators**:
   - Active/completed status
-  - AI model used (GPT-4.5 or Claude 3.7)
+  - AI model used (GPT-4, Claude, or Gemini)
   - Summary availability
 
-### 5. History View
+### 5. History View ✅
 - **Complete conversation archive**
 - **Filtering options** (future enhancement)
 - **Session details**:
@@ -66,7 +70,7 @@
   - AI-generated summaries
 - **Navigation** to individual sessions
 
-### 6. Profile Management
+### 6. Profile Management ✅
 - **View and edit** profile information
 - **Update preferences** at any time
 - **Data categories**:
@@ -75,7 +79,7 @@
   - Health information
   - Communication preferences
 
-### 7. Therapist's Brain
+### 7. Therapist's Brain ✅
 - **Transparent AI memory** showing what the AI knows
 - **Organized categories**:
   - Personal Profile
@@ -89,21 +93,21 @@
 - **Inline editing** of any information
 - **Expandable/collapsible** category views
 
-### 8. Session Features
-- **Mood tracking** (initial mood rating)
+### 8. Session Features ✅
+- **Mood tracking** (initial mood rating - user-set, not automatic)
 - **Message persistence** across sessions
 - **Debug mode** to view:
   - System prompts
   - Message history
   - AI processing details
-- **Model selection** (GPT-4.5 or Claude 3.7)
+- **Model selection** through preferences (GPT-4o, Claude 3.5 Sonnet, or Gemini 2.0 Flash)
 
-### 9. AI Capabilities
+### 9. AI Capabilities ✅
 - **Session summaries** with:
   - Brief overview (2-3 sentences)
   - Identified patterns (3 key themes)
   - Follow-up suggestions
-- **Automatic learning** (ENABLE_AUTO_LEARNING=true):
+- **Automatic learning**:
   - Automatically extracts and remembers information from conversations
   - Intelligently merges new information with existing knowledge
   - Shows users what was learned after each session
@@ -114,41 +118,59 @@
 
 ## Technical Features
 
-### 1. Data Management
-- **Firebase Firestore** integration
-- **Real-time updates**
-- **Data migration** tools
-- **Backup capabilities**
+### 1. Data Management ⚠️
+- **SQLite** local database (NO ENCRYPTION)
+- **Firebase Firestore** integration (optional)
+- **Data migration** tools ❌
+- **Backup capabilities** ❌
 
-### 2. Performance
+### 2. Performance ✅
 - **Lazy loading** of conversations
 - **Optimistic UI updates**
 - **Efficient message rendering**
-- **Streaming responses** (Claude 3.7)
+- **Streaming responses** (Claude)
 
-### 3. Error Handling
+### 3. Error Handling ✅
 - **Graceful degradation**
 - **User-friendly error messages**
 - **Fallback AI responses**
 - **Session recovery**
 
-### 4. Accessibility
+### 4. Accessibility ⚠️
 - **Keyboard navigation**
 - **Screen reader support** (partial)
 - **Responsive design**
 - **Clear visual hierarchy**
 
-## Planned Enhancements
+## Security Status ⚠️
+
+### ✅ Recently Fixed:
+- CSRF protection (double-submit cookie)
+- SQL injection protection (field whitelisting)
+- Sensitive data redaction in logs
+- Input validation (Zod schemas)
+- Request size limits (1MB)
+
+### ❌ CRITICAL GAPS:
+- No database encryption (all data in plaintext)
+- No authentication system
+- No session management/timeouts
+- No audit logging
+- No data export (GDPR compliance)
+
+## Planned Enhancements 🔜
 
 ### For Launch
-1. **Export conversations** to JSON/PDF/Markdown
-2. **Search functionality** in conversation history
-3. **Crisis resources** page with emergency contacts
-4. **Offline mode** with Progressive Web App support
-5. **Backup/restore** functionality
-6. **Session templates** for guided exercises
-7. **Keyboard shortcuts** for power users
-8. **Basic mood tracking** visualization
+1. **Database encryption** (CRITICAL)
+2. **Authentication system** (CRITICAL)
+3. **Export conversations** to JSON/PDF/Markdown
+4. **Search functionality** in conversation history
+5. **Crisis resources** page with emergency contacts
+6. **Offline mode** with Progressive Web App support
+7. **Backup/restore** functionality
+8. **Session templates** for guided exercises
+9. **Keyboard shortcuts** for power users
+10. **Basic mood tracking** visualization
 
 ### Post-Launch
 1. **Voice input/output** support

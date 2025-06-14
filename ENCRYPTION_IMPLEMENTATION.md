@@ -1,4 +1,8 @@
-# SQLite Encryption Implementation Guide
+# SQLite Encryption Implementation Plan
+
+## ⚠️ STATUS: NOT IMPLEMENTED
+
+**This document describes a PLANNED implementation for database encryption. The application currently stores all data in plaintext SQLite. DO NOT use this application for real therapy data until encryption is implemented.**
 
 ## Recommended Solution: better-sqlite3-multiple-ciphers
 

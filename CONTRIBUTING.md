@@ -2,6 +2,16 @@
 
 Thank you for your interest in contributing to CounsellorAI! This AI therapy application aims to make mental health support accessible to everyone.
 
+## ⚠️ IMPORTANT SECURITY NOTICE
+
+**This application is currently in DEVELOPMENT ONLY status with critical security vulnerabilities:**
+- No database encryption (all data stored in plaintext)
+- No authentication system
+- SQL injection vulnerabilities
+- Sensitive data in logs
+
+**Priority should be given to fixing these security issues before adding new features. See TODO.md for the complete list.**
+
 ## Code of Conduct
 
 By participating in this project, you agree to maintain a respectful and inclusive environment. Remember that this is a mental health application, and user safety is paramount.

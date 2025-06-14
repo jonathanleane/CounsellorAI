@@ -5,10 +5,16 @@
 > **This application has CRITICAL SECURITY VULNERABILITIES:**
 > - ❌ **NO DATABASE ENCRYPTION** - All therapy conversations stored in plaintext
 > - ❌ **NO AUTHENTICATION** - Anyone with access can read all data
-> - ❌ **NO INPUT VALIDATION** - Vulnerable to SQL injection and data corruption
-> - ❌ **SENSITIVE DATA IN LOGS** - Personal information exposed in log files
+> - ❌ **NO SESSION MANAGEMENT** - Sessions never expire
+> - ❌ **NO AUDIT LOGGING** - No tracking of data access
 > 
-> **This is a development prototype only. DO NOT use for actual therapy sessions or sensitive personal data until these security issues are resolved. See [TODO.md](./TODO.md) for the full list of security issues.**
+> **Recently Fixed (2025-06-13):**
+> - ✅ Input validation (Zod schemas)
+> - ✅ SQL injection protection
+> - ✅ Sensitive data redaction in logs
+> - ✅ CSRF protection
+> 
+> **This is a development prototype only. DO NOT use for actual therapy sessions or sensitive personal data until the remaining security issues are resolved. See [TODO.md](./TODO.md) for the full list.**
 
 ## What is CounsellorAI?
 
@@ -18,7 +24,7 @@ CounsellorAI is a free, open-source AI therapist that provides personalized ment
 
 ## 🎯 Features
 
-- 🤖 **Multiple AI Options**: Choose between GPT-4 (OpenAI), Claude (Anthropic), or Gemini (Google)
+- 🤖 **Multiple AI Options**: Choose between GPT-4o (OpenAI), Claude 3.5 Sonnet (Anthropic), or Gemini 2.0 Flash (Google)
 - 🔒 **Privacy Focused**: Run it on your own computer - your conversations stay private
 - 💬 **Natural Conversations**: Chat like you would with a real therapist
 - 📊 **Track Your Progress**: See your mood patterns over time

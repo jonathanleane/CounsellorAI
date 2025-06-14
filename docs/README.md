@@ -2,11 +2,21 @@
 
 This documentation provides a comprehensive overview of the CounsellorAI application, its architecture, features, and implementation details.
 
+## ⚠️ CRITICAL SECURITY WARNING
+
+**This application is currently in DEVELOPMENT ONLY status with critical security vulnerabilities:**
+- ❌ No database encryption (all therapy data stored in plaintext)
+- ❌ No authentication system
+- ❌ SQL injection vulnerabilities
+- ❌ Sensitive data in logs
+
+**DO NOT USE FOR REAL THERAPY DATA UNTIL THESE ISSUES ARE RESOLVED**
+
 ## Project Status
 
-CounsellorAI has been successfully rebuilt with modern architecture and enhanced security features. The application is designed for both:
-- **Online use**: Deploy to cloud services with Firebase support
-- **Local use**: Run with SQLite for maximum privacy
+CounsellorAI is a development prototype with modern architecture but critical security gaps. The application is designed for both:
+- **Online use**: Deploy to cloud services with Firebase support (NOT SECURE)
+- **Local use**: Run with SQLite for development only (DATA NOT ENCRYPTED)
 
 Users provide their own API keys for OpenAI, Anthropic, or Google AI services.
 
@@ -77,11 +87,14 @@ Users provide their own API keys for OpenAI, Anthropic, or Google AI services.
 
 ## Key Improvements Completed
 
-### Security Enhancements ✅
-1. **API Keys**: Moved to environment variables with validation
-2. **PII Protection**: Automatic redaction in logs
-3. **Input Sanitization**: Prompt injection protection
-4. **Rate Limiting**: API endpoint protection
+### Security Status ⚠️
+1. **API Keys**: ✅ Moved to environment variables
+2. **PII Protection**: ❌ NOT IMPLEMENTED - Full profile data logged
+3. **Input Sanitization**: ⚠️ Limited - SQL injection risks remain
+4. **Rate Limiting**: ✅ Basic rate limiting implemented
+5. **Database Encryption**: ❌ NOT IMPLEMENTED
+6. **Authentication**: ❌ NOT IMPLEMENTED
+7. **CSRF Protection**: ❌ NOT IMPLEMENTED
 
 ### Architecture Improvements ✅
 1. **TypeScript**: Full type safety throughout
@@ -89,25 +102,32 @@ Users provide their own API keys for OpenAI, Anthropic, or Google AI services.
 3. **Firebase Support**: Complete integration with migration tools
 4. **Structured Logging**: Winston with PII filtering
 
-### Remaining Priorities
-1. **Database Encryption**: Encrypt SQLite at rest
-2. **Export Formats**: Add PDF and Markdown
-3. **Crisis Management**: Enhanced detection and resources
-4. **Search**: Full-text search in conversations
-5. **Voice Support**: Speech input/output
-6. **Mobile Apps**: Native applications
+### Critical Security Priorities
+1. **Database Encryption**: CRITICAL - All data in plaintext
+2. **Authentication System**: CRITICAL - No access control
+3. **Fix SQL Injection**: CRITICAL - Dynamic queries vulnerable
+4. **Remove Sensitive Logs**: HIGH - PII exposed in logs
+5. **Add CSRF Protection**: HIGH - Cross-site vulnerabilities
+6. **Input Validation**: HIGH - Missing on many endpoints
+
+### Feature Priorities (AFTER security fixes)
+1. **Export Formats**: Add PDF and Markdown
+2. **Crisis Management**: Enhanced detection and resources
+3. **Search**: Full-text search in conversations
+4. **Voice Support**: Speech input/output
+5. **Mobile Apps**: Native applications
 
 ## Current State
 
-The application has been successfully rebuilt with:
+The application has been rebuilt with:
 1. ✅ Core backend services with TypeScript
 2. ✅ React frontend with Material-UI
 3. ✅ Multi-model AI integration (GPT-4, Claude 3, Gemini)
-4. ✅ Security features (PII redaction, injection protection)
-5. ✅ Firebase and SQLite support
-6. ✅ Comprehensive testing suite
+4. ❌ Security features INCOMPLETE (critical vulnerabilities)
+5. ⚠️ Firebase and SQLite support (NO ENCRYPTION)
+6. ⚠️ Basic testing suite
 
-Ready for community contributions and further enhancements.
+**NOT READY FOR PRODUCTION USE - Development only until security issues are resolved.**
 
 ## Quick Start
 

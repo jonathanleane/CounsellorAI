@@ -1,173 +1,122 @@
 # AI Integration and Prompting System
 
-> **Note**: This document reflects the current implementation as of June 2025. For the most up-to-date implementation details, see the actual source code in `/server/src/services/ai/`.
+## Current Implementation Status
+
+**Last Updated**: June 2025
+
+This document describes the AI integration as currently implemented in CounsellorAI.
+
+## Supported AI Models
+
+### 1. OpenAI
+- **GPT-4** (`gpt-4`)
+- **GPT-4 Turbo** (`gpt-4-turbo-preview`)
+- **GPT-3.5 Turbo** (`gpt-3.5-turbo`)
+
+### 2. Anthropic
+- **Claude 3 Opus** (`claude-3-opus-20240229`)
+- **Claude 3 Sonnet** (`claude-3-sonnet-20240229`)
+- **Claude 3 Haiku** (`claude-3-haiku-20240307`)
+
+### 3. Google
+- **Gemini Pro** (`gemini-pro`)
 
 ## AI Service Architecture
 
-### Supported Models (Implemented)
+### Service Location
+`/server/src/services/ai/index.ts`
 
-1. **OpenAI GPT-4.5** (`gpt-4.5-preview`)
-   - Primary therapy model
-   - Default model for new sessions
-   - 128,000 token context window
-   - JSON response format support
-   - Enhanced reasoning capabilities
+### Provider Implementations
+- `/server/src/services/ai/providers/openai.ts`
+- `/server/src/services/ai/providers/anthropic.ts`
+- `/server/src/services/ai/providers/gemini.ts`
 
-2. **Anthropic Claude 4 Opus** (`claude-4-opus`)
-   - Premium therapy model
-   - 200,000 token context window
-   - Extended thinking capabilities
-   - Superior reasoning and empathy
-   
-3. **Anthropic Claude 4 Sonnet** (`claude-4-sonnet`)
-   - Balanced therapy model
-   - 200,000 token context window
-   - Lower cost than Opus
-   - Fast and efficient
-
-4. **Google Gemini 2.5 Pro** (`gemini-2.5-pro`)
-   - Advanced reasoning model
-   - 2 million token context window
-   - Enhanced deep thinking
-   - Excellent for complex therapy
-   
-5. **Google Gemini 2.5 Flash** (`gemini-2.5-flash`)
-   - Cost-effective option
-   - 1 million token context window
-   - Lightning fast responses
-   - Good for routine sessions
-
-### AI Service Implementation
-
-Location: `/server/src/services/ai/index.ts`
-
-The AI service provides a unified interface for all models:
-
+### Core Interface
 ```typescript
-class AIService {
-  async generateResponse(messages, userProfile, model?: AIModel): Promise<AIResponse>
-  async generateSummary(messages, sessionData, model?: AIModel): Promise<SummaryResponse>
-  async generateTherapistGreeting(context, userProfile, model?: AIModel): Promise<string>
+interface AIService {
+  generateResponse(
+    messages: Message[],
+    userProfile: any,
+    model?: string
+  ): Promise<AIResponse>
+  
+  generateSummary(
+    messages: Message[],
+    sessionData: any,
+    model?: string
+  ): Promise<SummaryResponse>
 }
 ```
 
-Key features:
-- Automatic model fallback on errors
-- Cost estimation for each response
-- Token usage tracking
-- Consistent error handling
-- Lazy provider initialization for improved performance
-- Input sanitization and prompt injection protection
+## Therapy Prompt System
 
-## Core Therapy Prompt
+### Location
+`/server/src/services/ai/prompts/therapyPrompt.ts`
 
-Location: `/server/src/services/ai/therapyPrompt.ts`
+### Core Instructions
+The therapy prompt includes:
+1. Non-judgmental, supportive approach
+2. Evidence-based therapeutic techniques
+3. Crisis intervention protocols
+4. User preference adaptation
+5. Session continuity maintenance
 
-The therapy prompt is carefully crafted to ensure therapeutic best practices:
-
-### Key Instructions:
-1. Provide a non-judgmental, supportive space
-2. Leave ample space for user expression
-3. Periodically check understanding
-4. Avoid physical descriptions or third-person language
-5. Analyze patterns in moods, mindsets, and behaviors
-6. Adapt communication style to user preferences
-7. Remember previous sessions for continuity
-8. Generate appropriate greetings based on time since last session
-6. Offer evidence-based techniques (CBT, mindfulness)
-7. Handle crisis situations appropriately
-8. Respect user autonomy while challenging maladaptive patterns
-9. Maintain warm, empathetic tone
-10. Keep responses concise but insightful
-
-### Context Integration
-
-The prompt dynamically includes:
-- User name and demographics
-- Therapy goals and preferences
-- Health information
+### Dynamic Context Integration
+- User demographics and preferences
+- Health information and medications
+- Therapy goals and boundaries
 - Previous session summaries
-- Personal details from all conversations
+- Accumulated personal details
 - Time since last session
 
-## Prompt Structure
+## Personal Detail Tracking
 
-```
-[Main Therapy Instructions]
-    ↓
-[User Profile Context]
-    ↓
-[Personal Details by Category]
-    ↓
-[Previous Session Summaries]
-    ↓
-[Timing Instructions]
-    ↓
-[User Messages]
-```
+The system organizes information into 8 categories:
+1. **Personal Profile** - Basic demographics, values
+2. **Relationships** - Family, social connections
+3. **Work & Purpose** - Career, aspirations
+4. **Health & Wellbeing** - Physical and mental health
+5. **Lifestyle & Habits** - Routines, coping strategies
+6. **Goals & Plans** - Short and long-term objectives
+7. **Patterns & Insights** - Recurring themes
+8. **Preferences & Boundaries** - Communication style
 
-## Personal Detail Categories
+## Session Management
 
-The AI tracks information in 8 structured categories:
+### Session Types
+1. **Intake Session** - First-time user onboarding
+2. **Standard Session** - Regular therapy conversations
 
-1. **Personal Profile**: Name, age, location, values
-2. **Relationships**: Partner, family, social connections
-3. **Work & Purpose**: Career, aspirations, skills
-4. **Health & Wellbeing**: Physical/mental health, medications
-5. **Lifestyle & Habits**: Routines, hobbies, stress management
-6. **Goals & Plans**: Short/long-term goals, milestones
-7. **Patterns & Insights**: Recurring themes, triggers
-8. **Preferences & Boundaries**: Communication style, sensitive topics
+### Session Flow
+1. **Start**: Greeting based on time elapsed
+2. **During**: Active conversation with context
+3. **End**: Summary generation and pattern identification
 
-## Session Flow Integration
+## API Configuration
 
-### New Session Start
-1. Calculate time since last session
-2. Generate appropriate greeting
-3. Reference previous conversation timing
-4. Invite user to share current state
-
-### During Conversation
-1. Maintain context from profile
-2. Reference accumulated personal details
-3. Apply therapeutic techniques
-4. Track new information for extraction
-
-### Session End
-1. Generate summary (2-3 sentences)
-2. Identify 3 key patterns
-3. Suggest 2-3 follow-up topics
-4. Extract new personal details
-
-## AI Response Generation
-
-### Model Configurations
-
-#### OpenAI GPT-4.5
+### OpenAI
 ```typescript
 {
-  model: 'gpt-4.5-preview',
-  messages: apiMessages,
+  model: "gpt-4", // or other available models
+  messages: formattedMessages,
   temperature: 0.7,
-  max_tokens: 4096,
-  response_format: { type: "json_object" }  // For structured responses
+  max_tokens: 4096
 }
 ```
 
-#### Anthropic Claude 4
+### Anthropic
 ```typescript
 {
-  model: 'claude-4-opus', // or 'claude-4-sonnet'
+  model: "claude-3-opus-20240229",
   messages: formattedMessages,
   max_tokens: 4096,
   temperature: 0.7
 }
 ```
 
-#### Google Gemini 2.5
+### Google Gemini
 ```typescript
 {
-  model: 'gemini-2.5-pro', // or 'gemini-2.5-flash'
   contents: [{
     parts: [{ text: prompt }]
   }],
@@ -178,82 +127,72 @@ The AI tracks information in 8 structured categories:
 }
 ```
 
-## Special Message Handling
-
-### Session Start Marker
-`[NEW_SESSION_START]` - Hidden message that triggers greeting
-
-### Intake Session
-Fixed welcome message for first-time users focusing on gathering context
-
-### Crisis Detection
-System monitors for self-harm indicators and provides appropriate resources
-
 ## Error Handling
 
-1. **API Failures**: Fallback to simple responses
-2. **Parsing Errors**: Safe JSON parsing with defaults
-3. **Timeout Handling**: Graceful degradation
-4. **Model Switching**: Automatic fallback to available model
+1. **API Key Validation** - Checks for required keys
+2. **Rate Limiting** - 100 requests per 15 minutes
+3. **Model Fallback** - Switches to available model
+4. **Graceful Degradation** - Returns error messages
+5. **Logging** - Winston logger for debugging
 
-## Implementation Guide
+## Security Considerations
 
-### Adding a New AI Model
+⚠️ **Current Limitations**:
+- No prompt injection protection
+- Limited input sanitization
+- Full conversation history sent with each request
+- No token limit enforcement
 
-1. **Update Types** (`/server/src/services/ai/types.ts`):
-   ```typescript
-   export type AIModel = 'gpt-4.5-preview' | 'claude-4-opus' | 'gemini-2.5-pro' | 'your-new-model';
-   ```
+## Environment Configuration
 
-2. **Add Provider Class** (`/server/src/services/ai/providers/`):
-   - Implement the `AIProvider` interface
-   - Handle authentication and API calls
-   - Map responses to standard format
-   - Provider will be lazily loaded on first use
-
-3. **Update AI Service** (`/server/src/services/ai/index.ts`):
-   - Add model to the switch statement
-   - Configure cost estimation
-   - Register provider class for lazy initialization
-
-### Modifying Therapy Behavior
-
-1. **Edit System Prompt** (`/server/src/services/ai/therapyPrompt.ts`):
-   - Adjust therapeutic approach
-   - Modify response style
-   - Add new guidelines
-
-2. **Update Greeting Logic** (`/server/src/services/ai/index.ts`):
-   - Modify `generateTherapistGreeting` method
-   - Adjust time-based greetings
-
-3. **Enhance Summary Generation**:
-   - Edit summary prompt structure
-   - Add new pattern detection
-
-## Testing AI Changes
-
+Required environment variables:
 ```bash
-# Test specific model
-node test-full-api.js
+# At least one AI key required
+OPENAI_API_KEY=your_key
+ANTHROPIC_API_KEY=your_key
+GOOGLE_AI_API_KEY=your_key
 
-# Test conversation flow
-node test-app-flow.js
-
-# Manual testing with curl
-curl -X POST http://localhost:3001/api/test/ai \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Test message", "model": "gpt-4.5-preview"}'
+# Optional configuration
+DEFAULT_AI_MODEL=gpt-4
+MAX_TOKENS=16384
+AI_TEMPERATURE=0.7
 ```
 
-## Future Enhancements
+## Implementation Notes
 
-1. **Voice Integration**: Speech-to-text and text-to-speech
-2. **Multi-modal Input**: Image and document analysis
-3. **Advanced Memory**: Vector database for better recall
-4. **Personalized Models**: Fine-tuning on user patterns
-5. **Therapeutic Protocols**: Structured intervention programs
-6. **Group Therapy Mode**: Multi-user sessions
-7. **Therapist Supervision**: Human-in-the-loop option
-8. **Enhanced Crisis Detection**: ML-based risk assessment
-9. **Multilingual Support**: Therapy in multiple languages
+### Current Issues
+1. Model names in UI don't match API model names
+2. No streaming support for real-time responses
+3. Token counting not implemented
+4. Cost tracking not implemented
+
+### Future Improvements
+1. Add streaming responses
+2. Implement token counting
+3. Add cost estimation
+4. Improve prompt injection protection
+5. Add conversation compression
+6. Implement model-specific optimizations
+
+## Testing
+
+Test files available:
+- `/test-ai-direct.js` - Direct AI provider testing
+- `/test-models.html` - Browser-based model testing
+- Integration tests in `/tests/`
+
+## Usage Example
+
+```javascript
+// From conversation endpoint
+const response = await aiService.generateResponse(
+  messages,
+  userProfile,
+  selectedModel
+);
+
+// Response includes:
+// - content: AI's response text
+// - usage: Token usage (if available)
+// - model: Model used
+```

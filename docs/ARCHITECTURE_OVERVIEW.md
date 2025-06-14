@@ -1,92 +1,229 @@
-# AI Therapist Architecture Overview
+# CounsellorAI Architecture Overview
+
+## Current Implementation Status
+
+**Last Updated**: June 2025
+
+⚠️ **DEVELOPMENT STATUS**: This application has critical security vulnerabilities and should not be used for real therapy data.
 
 ## System Architecture
 
-The AI Therapist is a full-stack web application with the following architecture:
+CounsellorAI is a full-stack TypeScript application with the following architecture:
 
-### Frontend (React)
-- **Framework**: React 18.2.0 with React Router DOM for routing
-- **Styling**: Custom CSS with component-specific stylesheets
-- **HTTP Client**: Axios for API communication
-- **Charting**: Chart.js with react-chartjs-2 for data visualization
-- **Date Handling**: date-fns and date-fns-tz for timezone management
+### Frontend (Client)
+- **Framework**: React 18.2 with TypeScript
+- **Build Tool**: Vite 5.0
+- **Routing**: React Router v6
+- **State Management**: Zustand
+- **Data Fetching**: TanStack Query (React Query)
+- **UI Framework**: Material-UI (MUI) v5
+- **Styling**: Emotion (CSS-in-JS)
+- **Forms**: React Hook Form
+- **HTTP Client**: Axios
 
-### Backend (Node.js/Express)
-- **Framework**: Express.js with Node.js 18.x
-- **Security**: Helmet for security headers, CORS for cross-origin requests
-- **Logging**: Morgan for HTTP request logging
-- **Environment**: dotenv for configuration management
-
-### Database
-- **Primary**: Firebase Firestore (cloud-based NoSQL)
-- **Legacy Support**: SQLite3 (local database option)
-- **Migration**: System supports switching between Firebase and SQLite
+### Backend (Server)
+- **Runtime**: Node.js 18+
+- **Framework**: Express.js with TypeScript
+- **Database**: SQLite3 (⚠️ NO ENCRYPTION)
+- **Validation**: Zod
+- **Logging**: Winston
+- **Security**: CORS, Helmet, Express Rate Limit
+- **Environment**: dotenv
 
 ### AI Integration
-- **Primary Model**: OpenAI GPT-4.5-preview
-- **Secondary Model**: Anthropic Claude 3.7 Sonnet
-- **Fallback**: Graceful degradation if AI services fail
+- **OpenAI**: GPT-4, GPT-4 Turbo, GPT-3.5 Turbo
+- **Anthropic**: Claude 3 (Opus, Sonnet, Haiku)
+- **Google**: Gemini Pro
 
 ## Directory Structure
 
 ```
-aitherapist-main/
-├── frontend/                 # React frontend application
-│   ├── public/              # Static assets
+CounsellorAI/
+├── client/                  # React frontend application
 │   ├── src/
-│   │   ├── components/      # Reusable UI components
-│   │   ├── pages/          # Page-level components
-│   │   ├── styles/         # Global styles
-│   │   └── utils/          # Utility functions
-│   └── package.json
+│   │   ├── components/     # Reusable UI components
+│   │   ├── pages/         # Page-level components
+│   │   ├── hooks/         # Custom React hooks
+│   │   ├── services/      # API client services
+│   │   ├── stores/        # Zustand state stores
+│   │   └── theme.ts       # MUI theme configuration
+│   ├── index.html
+│   ├── vite.config.ts
+│   └── tsconfig.json
 │
-├── backend/                 # Express backend server
-│   ├── models/             # Data models
-│   ├── routes/             # API endpoint definitions
-│   ├── services/           # Business logic and integrations
-│   ├── utils/              # Helper functions
-│   └── server.js           # Main server file
+├── server/                  # Express backend server
+│   ├── src/
+│   │   ├── config/        # Configuration validation
+│   │   ├── middleware/    # Express middleware
+│   │   ├── routes/        # API endpoints
+│   │   ├── services/      # Business logic
+│   │   │   ├── ai/       # AI provider integrations
+│   │   │   └── database/  # Database abstraction
+│   │   ├── utils/         # Helper functions
+│   │   └── validation/    # Zod schemas
+│   ├── dist/              # Compiled TypeScript
+│   └── tsconfig.json
 │
-├── functions/              # Firebase Cloud Functions (optional)
-├── firebase.json           # Firebase configuration
-└── package.json           # Root package configuration
+├── database/               # SQLite database files
+├── docs/                   # Documentation
+├── logs/                   # Application logs
+├── scripts/                # Setup and utility scripts
+├── tests/                  # Test files
+└── package.json           # Workspace configuration
 ```
 
-## Key Design Decisions
+## Key Architectural Decisions
 
-1. **Microservices Architecture**: Frontend and backend are separate services
-2. **API-First Design**: Clean REST API interface between frontend and backend
-3. **Database Abstraction**: Models abstract database operations for easy switching
-4. **Service Layer Pattern**: Business logic separated from routes
-5. **Component-Based UI**: Reusable React components for maintainability
+### 1. TypeScript Throughout
+- Type safety for API contracts
+- Better IDE support
+- Self-documenting code
+- Compile-time error catching
 
-## Deployment Options
+### 2. Monorepo with Workspaces
+- Shared dependencies
+- Unified scripts
+- Easier development
+- Consistent tooling
 
-### Local Deployment (Privacy-First)
-- **Complete local operation**: All data stays on user's machine
-- **SQLite database**: No external database required
-- **User-provided API keys**: OpenAI/Anthropic keys configured locally
-- **Simple setup**: `npm install && npm start`
-- **Docker support**: Optional containerized deployment
+### 3. Local-First Design
+- SQLite for zero-config database
+- No external services required
+- User owns their data
+- Privacy by default
 
-### Cloud Deployment Options
-1. **Firebase Hosting**: Frontend on Firebase, backend on Cloud Functions
-2. **Digital Ocean**: Backend deployed via do-app.yaml configuration
-3. **Heroku**: Support via Procfile for easy deployment
-4. **Self-hosted VPS**: Deploy on any Linux server
-5. **Vercel/Netlify**: Frontend with serverless functions
+### 4. Service Layer Pattern
+- Clean separation of concerns
+- Testable business logic
+- Database abstraction
+- AI provider abstraction
 
-### Open Source Considerations
-- **License**: MIT or Apache 2.0 for maximum flexibility
-- **No proprietary dependencies**: All components replaceable
-- **API key security**: Never stored in code, always user-provided
-- **Database abstraction**: Easy switching between local/cloud storage
-- **Configuration flexibility**: Environment variables for all settings
+## API Architecture
 
-## Security Considerations
+### RESTful Endpoints
+```
+GET    /api/health          # Health check
+GET    /api/profile         # Get user profile
+POST   /api/profile         # Create/update profile
+PATCH  /api/profile/:field  # Update specific field
+GET    /api/sessions        # List sessions
+POST   /api/sessions        # Create session
+GET    /api/sessions/:id    # Get session details
+POST   /api/sessions/:id/messages  # Add message
+PATCH  /api/sessions/:id    # Update session
+DELETE /api/sessions/:id    # Delete session
+```
 
-- API keys stored in environment variables
-- CORS configured for specific origins
-- Helmet.js for security headers
-- Input validation on both frontend and backend
-- Firebase security rules for database access
+### Request/Response Flow
+1. Client makes HTTP request
+2. Express middleware (CORS, rate limiting)
+3. Route handler validates input with Zod
+4. Service layer processes business logic
+5. Database/AI operations
+6. Response sent back to client
+
+## Data Flow
+
+### User Profile Management
+```
+React Form → API Request → Validation → SQLite → Response
+```
+
+### AI Conversation
+```
+User Input → API → AI Service → Provider (OpenAI/Anthropic/Google) → 
+Process Response → Store in DB → Return to Client
+```
+
+### Session Management
+```
+Create Session → Store Metadata → Add Messages → 
+Generate Summary → Update Session → Display History
+```
+
+## Security Architecture
+
+### Current Implementation ✅
+- Environment variable configuration
+- Rate limiting (100 req/15min)
+- CORS configuration
+- Input validation with Zod
+- Error handling middleware
+
+### NOT Implemented ❌
+- Database encryption
+- Authentication system
+- CSRF protection
+- Session management
+- API key rotation
+- Audit logging
+
+## Development vs Production
+
+### Development Mode
+- Vite dev server (port 5173)
+- Express with nodemon (port 3001)
+- Hot module replacement
+- Debug logging enabled
+- CORS allows localhost
+
+### Production Mode (NOT READY)
+Missing critical security features:
+- No HTTPS configuration
+- No database encryption
+- No authentication
+- No production logging
+- No monitoring
+
+## Deployment Considerations
+
+### Current State
+- Local development only
+- Not suitable for production
+- Critical security gaps
+
+### Required for Production
+1. Implement database encryption
+2. Add authentication system
+3. Configure HTTPS
+4. Add session management
+5. Implement CSRF protection
+6. Set up monitoring
+7. Configure backups
+8. Add rate limiting per user
+9. Implement audit logging
+10. Security audit
+
+## Performance Characteristics
+
+### Strengths
+- Fast local SQLite queries
+- Efficient React rendering
+- Lazy loading with React Query
+- Optimized bundle with Vite
+
+### Limitations
+- Full conversation history in memory
+- No pagination for large datasets
+- No caching strategy
+- No WebSocket for real-time
+
+## Future Architecture Improvements
+
+### High Priority
+1. Database encryption
+2. Authentication system
+3. Proper session management
+4. WebSocket for streaming AI responses
+
+### Medium Priority
+1. Redis for caching
+2. Message queue for AI requests
+3. Pagination for conversations
+4. Compression for large texts
+
+### Low Priority
+1. Microservices architecture
+2. GraphQL API
+3. Server-side rendering
+4. PWA support
