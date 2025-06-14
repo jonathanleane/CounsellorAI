@@ -37,6 +37,9 @@ export default function Layout({ children }: LayoutProps) {
               <Button color="inherit" onClick={() => navigate('/therapist-brain')}>
                 Brain
               </Button>
+              <Button color="inherit" onClick={() => navigate('/export')}>
+                Export
+              </Button>
             </Box>
           )}
         </Toolbar>

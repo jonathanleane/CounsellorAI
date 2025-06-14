@@ -22,6 +22,7 @@ import sessionRoutes from './routes/sessions';
 import profileRoutes from './routes/profile';
 import healthRoutes from './routes/health';
 import testRoutes from './routes/test';
+import exportRoutes from './routes/export';
 
 // Validate environment variables
 validateEnv();
@@ -77,6 +78,7 @@ app.use('/api/sessions', sessionRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/test', testRoutes);
+app.use('/api', exportRoutes);  // Export routes at /api/export/*
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

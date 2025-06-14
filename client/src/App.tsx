@@ -12,6 +12,7 @@ import History from '@/pages/History';
 import Profile from '@/pages/Profile';
 import TherapistBrain from '@/pages/TherapistBrain';
 import Onboarding from '@/pages/Onboarding';
+import DataExport from '@/pages/DataExport';
 import NotFound from '@/pages/NotFound';
 
 function App() {
@@ -60,6 +61,10 @@ function App() {
           <Route
             path="/therapist-brain"
             element={profile ? <TherapistBrain /> : <Navigate to="/onboarding" />}
+          />
+          <Route
+            path="/export"
+            element={profile ? <DataExport /> : <Navigate to="/onboarding" />}
           />
           <Route
             path="/onboarding"

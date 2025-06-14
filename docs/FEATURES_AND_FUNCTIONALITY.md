@@ -158,12 +158,26 @@ This document describes both implemented features (✅) and planned features (�
 - No audit logging
 - No data export (GDPR compliance)
 
+## Recently Added Features ✅
+
+### Data Export & GDPR Compliance (NEW - 2025-06-14)
+- **Export All Data**: Download everything in JSON, Text, or ZIP format
+- **GDPR Compliance**: Full data portability and right to erasure
+- **Complete Deletion**: Permanently remove all data with confirmation
+- **No Lock-in**: Users own and control all their data
+
+### Database Encryption (NEW - 2025-06-14)
+- **SQLCipher Integration**: AES-256 encryption for all data at rest
+- **Transparent Operation**: No code changes needed after setup
+- **Migration Tool**: Encrypt existing databases easily
+- **Key Management**: Secure key storage via environment variables
+
 ## Planned Enhancements 🔜
 
 ### For Launch
-1. **Database encryption** (CRITICAL)
+1. ~~**Database encryption**~~ ✅ COMPLETED
 2. **Authentication system** (CRITICAL)
-3. **Export conversations** to JSON/PDF/Markdown
+3. ~~**Export conversations**~~ ✅ COMPLETED (JSON/Text/ZIP)
 4. **Search functionality** in conversation history
 5. **Crisis resources** page with emergency contacts
 6. **Offline mode** with Progressive Web App support
