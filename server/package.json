@@ -9,11 +9,14 @@
     "start": "node dist/index.js",
     "test": "jest",
     "typecheck": "tsc --noEmit",
-    "dev:node": "nodemon --exec 'node --loader tsx' src/index.ts"
+    "dev:node": "nodemon --exec 'node --loader tsx' src/index.ts",
+    "migrate:encrypt": "tsx src/utils/migrateToEncryptedDb.ts",
+    "test:encryption": "tsx src/tests/testEncryption.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "@google/generative-ai": "^0.1.3",
+    "@journeyapps/sqlcipher": "^5.3.1",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "date-fns": "^3.3.1",
